@@ -4,6 +4,7 @@
 // layout on a phone, a tablet and a desktop.
 import assert from "node:assert/strict";
 import { setViewport } from "./cdp-viewport.mjs";
+import { setMedia } from "./cdp-media.mjs";
 
 const MEMBER = "a1".repeat(16);
 const HOUSEHOLD = "f1".repeat(16);
@@ -264,12 +265,25 @@ export async function fridgeRegressions(client, until) {
   try {
     await until(async () => (await strokes()) === 1);
   } catch (error) {
+    // Once (#469) the board came back empty, not with one stroke: say whether
+    // the room was swapped or reset, or the events it read hide the strokes.
+    // Asked first, as a closed room makes the board itself throw.
+    const room = await page(`(() => {
+      const app = document.querySelector("kin-app");
+      const room = window.__fridgeRoom;
+      const view = room.records.view();
+      let kinds = null;
+      try { kinds = room.engine.eventMetadataBatch(Array.from({ length: view.length }, (_, index) => view.record(index))).map((event) => event.kind); } catch (error) { kinds = String(error?.message ?? error); }
+      return { shown: app.fridge.room === room, synced: app.syncCoordinator?.board === room, closed: room.closed, records: view.length, epoch: view.epoch,
+        loadedOrder: room.loadedOrder, pending: room.pending.size, refused: room.refused.length, syncError: room.syncError?.code ?? null, kinds,
+        sync: { state: app.syncState?.state ?? null, code: app.syncState?.code ?? null, coordinator: Boolean(app.syncCoordinator) } };
+    })()`).catch((reason) => String(reason?.message ?? reason));
     const state = await page(`(() => {
       const fridge = document.querySelector("kin-fridge");
       return { tool: fridge.tool, stroke: fridge.stroke ? { pointerType: fridge.stroke.pointerType, erasing: Boolean(fridge.stroke.erasing) } : null, penDown: fridge.penDown,
         status: fridge.querySelector(".fridge-status").textContent, strokes: window.__fridgeRoom.board().strokes.map((s) => ({ id: s.id.slice(0, 6), points: [...s.points].slice(0, 8) })) };
-    })()`);
-    error.message += ` — eraser at ${JSON.stringify(target)}; fridge ${JSON.stringify(state)}`;
+    })()`).catch((reason) => String(reason?.message ?? reason));
+    error.message += ` — eraser at ${JSON.stringify(target)}; fridge ${JSON.stringify(state)}; room ${JSON.stringify(room)}`;
     throw error;
   }
   await page(`document.querySelector("kin-fridge .fridge-history button:first-child").click()`);
@@ -418,6 +432,8 @@ export async function fridgeRegressions(client, until) {
     return { inked, palette: fridge.palette(), door: getComputedStyle(fridge.querySelector(".fridge-door")).getPropertyValue("--fridge-door").trim(), moving };
   })()`);
   await resize({ width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+  // Measured against light, not the machine's own appearance (#795).
+  await setMedia(client);
   const light = await inkCheck();
   // Kin's own dark appearance (the page may have pinned light), then back.
   const appearance = await page(`document.documentElement.dataset.kinAppearance ?? null`);
@@ -440,12 +456,16 @@ export async function fridgeRegressions(client, until) {
   assert.notEqual(dark.door, light.door, `dark mode darkens the door (${JSON.stringify(darkFacts)}; was ${JSON.stringify(appearance)})`);
   assert.notDeepEqual(dark.palette, light.palette, "dark mode remaps the ink colours");
   assert.ok(dark.inked > 0, "drawings stay visible in dark mode");
-  await client.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }, { name: "prefers-reduced-motion", value: "reduce" }] });
+  // Going back to light fades the fridge's buttons back (#795); let those
+  // fades end, so the next check counts only motion under reduced motion.
+  await page(`Promise.all(document.getAnimations().filter((animation) => document.querySelector("kin-fridge").contains(animation.effect?.target ?? null))
+    .map((animation) => animation.finished.catch(() => {}))).then(() => true)`);
+  await setMedia(client, [{ name: "forced-colors", value: "active" }, { name: "prefers-reduced-motion", value: "reduce" }]);
   const forced = await inkCheck();
   assert.ok(forced.palette.every((colour) => colour === "CanvasText"), "forced colours draw every ink in the system text colour");
   assert.ok(forced.inked > 0, "drawings stay visible in forced colours");
   assert.equal(forced.moving, 0, "nothing on the fridge moves with reduced motion");
-  await client.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "none" }, { name: "prefers-reduced-motion", value: "no-preference" }, { name: "prefers-color-scheme", value: "light" }] });
+  await setMedia(client);
 
   // Clean up: no room, no fridge database left behind for later checks.
   await page(`(async () => {

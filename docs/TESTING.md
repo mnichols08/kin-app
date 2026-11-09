@@ -359,8 +359,12 @@ person can continue; pointer and scroll activity reset the deadline. Closing the
 tab always locks immediately; a refresh of the same tab stays unlocked unless
 the person turned that off ([ADR 0010](decisions/0010-reload-resume.md)), and
 the main browser regression checks refresh, Lock, navigation and the setting.
-Regression tabs start with refresh-resume off (`scripts/cdp-page.mjs`). First-run
-copy explains that passkey-first describes everyday unlock; initial encryption
+Regression tabs start with refresh-resume off (`scripts/cdp-page.mjs`), and in
+light mode with forced colours off whatever the computer's own appearance
+(#795). A check that wants dark mode, forced colours or reduced motion asks for
+it through `setMedia` (`scripts/cdp-media.mjs`), which keeps that light start
+for everything it isn't asked to change; `setMedia(client)` returns to it.
+First-run copy explains that passkey-first describes everyday unlock; initial encryption
 setup still starts with the recovery key.
 
 ## Reproducible verification
@@ -447,6 +451,13 @@ folder as the `kin-browser-diagnostics` artifact.
 
 A flake is a bug to fix, not noise: fix the cause rather than lengthening a
 wait, and never delete or weaken a test to make it pass.
+
+A suite that waits for Kin to settle waits the way the `idle()` helpers do:
+until none of `app.busy`, `app.refreshing`, `app.pendingRefresh` and
+`app.wakePending` is set. `wakePending` is a wake (window focus, the tab
+showing again, the Pulse timer) whose refresh has not started yet (#793).
+Without it a check can land just before that refresh clears an alert,
+disables the controls or moves focus.
 
 ### Triage a flake
 
@@ -624,6 +635,22 @@ Results and limits are recorded in
 [audits/LIVE_HOUSEHOLD_VERIFICATION.md](audits/LIVE_HOUSEHOLD_VERIFICATION.md).
 Separate browser profiles on one machine are not physical devices, different
 networks or independent people; those drills remain manual.
+
+## A page that loads while the service worker installs (#770)
+
+The worker takes over open pages when it activates. A page whose load had
+already left for the network missed that and stayed without a worker until
+its next load, so it could not start offline. In the household drill this
+was a joining device's first reload, and it failed now and then on Edge.
+`scripts/worker-claim-regression.mjs` (its own CI job) makes it happen every
+time: its server holds one shell file, which keeps the install open, and
+the reloaded page's document until the worker has activated. It then checks
+that the page comes under the worker anyway (the page asks with
+`KIN_CLAIM`).
+
+```sh
+node scripts/verify.mjs --browser-only --suite worker-claim-regression
+```
 
 ## The home server's control panel (#718)
 

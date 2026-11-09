@@ -1,4 +1,5 @@
 import { setViewport } from "./cdp-viewport.mjs";
+import { setMedia } from "./cdp-media.mjs";
 import assert from "node:assert/strict";
 
 // Keyboard shortcuts and the command palette, driven by real CDP key events in
@@ -18,7 +19,7 @@ export async function keyboardCommandRegressions(client, { visit, ready }) {
     throw new Error(`Keyboard commands timed out: ${label}`);
   };
   const settle = () => page(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))));
-  const idle = () => until(() => { const app = document.querySelector("kin-app"); return Boolean(app?.state) && !app.busy && !app.refreshing && !app.pendingRefresh; }, "idle");
+  const idle = () => until(() => { const app = document.querySelector("kin-app"); return Boolean(app?.state) && !app.busy && !app.refreshing && !app.pendingRefresh && !app.wakePending; }, "idle");
   const KEYS = {
     k: { key: "k", code: "KeyK", windowsVirtualKeyCode: 75 },
     n: { key: "n", code: "KeyN", windowsVirtualKeyCode: 78, text: "n" },
@@ -454,7 +455,7 @@ export async function keyboardCommandRegressions(client, { visit, ready }) {
       const wasBusy = app.busy;
       app.ctx.append.runWorkspaceCommand("todo", {});
       await save;
-      for (let i = 0; (app.busy || app.refreshing) && i < 400; i++) await new Promise((resolve) => setTimeout(resolve, 10));
+      for (let i = 0; (app.busy || app.refreshing || app.pendingRefresh || app.wakePending) && i < 400; i++) await new Promise((resolve) => setTimeout(resolve, 10));
       return { wasBusy, hash: location.hash, count: app.state.items.filter((item) => item.text === text).length };
     }, inflight);
     check(during.wasBusy && during.hash === "#lists/todo" && during.count === 1, "navigating by command during a save keeps the save exactly once", during);
@@ -491,7 +492,7 @@ export async function keyboardCommandRegressions(client, { visit, ready }) {
     await press(KEYS.escape);
 
     await viewport(1280, 900, false);
-    await client.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }, { name: "prefers-reduced-motion", value: "reduce" }] });
+    await setMedia(client, [{ name: "forced-colors", value: "active" }, { name: "prefers-reduced-motion", value: "reduce" }]);
     await focusHeading();
     await ctrlK();
     const forced = await page(() => {
@@ -508,7 +509,7 @@ export async function keyboardCommandRegressions(client, { visit, ready }) {
     check(forced.forced && forced.border && forced.outline && forced.motion,
       "forced colours keep the palette boundary and active option visible; reduced motion removes its animation", forced);
     await press(KEYS.escape);
-    await client.send("Emulation.setEmulatedMedia", { media: "", features: [] });
+    await setMedia(client);
 
     const hints = await page(() => {
       const app = document.querySelector("kin-app");
@@ -576,7 +577,7 @@ export async function keyboardCommandRegressions(client, { visit, ready }) {
     check(state.paletteOpen && state.inPalette, "the palette works again after reconnection and unlock", state);
     await press(KEYS.escape);
   } finally {
-    await client.send("Emulation.setEmulatedMedia", { media: "", features: [] }).catch(() => {});
+    await setMedia(client).catch(() => {});
     await client.send("Emulation.clearDeviceMetricsOverride").catch(() => {});
     await closeAll().catch(() => {});
     await page(() => window.scrollTo(0, 0)).catch(() => {});

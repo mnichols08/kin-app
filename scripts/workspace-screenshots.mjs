@@ -8,6 +8,7 @@
 // Uses a fresh temporary profile and a loopback static server; never an
 // existing Kin database. No npm packages required.
 import { setViewport } from "./cdp-viewport.mjs";
+import { setMedia } from "./cdp-media.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -76,7 +77,7 @@ const shot = async (name) => {
   console.log(`saved ${name}.png`);
 };
 const viewport = (width, height, mobile) => setViewport(client, { width, height, deviceScaleFactor: 1, mobile });
-const scheme = (value) => client.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value }] });
+const scheme = (value) => setMedia(client, [{ name: "prefers-color-scheme", value }]);
 const visit = async (hash) => { await client.evaluate(`document.querySelector('kin-app').ctx.navigation.navigate(${JSON.stringify(hash)})`); await delay(60); };
 
 try {
@@ -89,6 +90,8 @@ try {
   client = await connect(target.webSocketDebuggerUrl);
   for (const domain of ["Runtime", "Page", "Log", "Network"]) await client.send(`${domain}.enable`);
   await viewport(1440, 960, false);
+  // Start light, so the first shots do not follow the computer's theme (#795).
+  await setMedia(client);
   await client.send("Page.navigate", { url: origin });
   await until(() => client.evaluate('Boolean(document.querySelector("kin-app")?.security?.heading)'), "shell");
   await shot("1440-locked-welcome");
@@ -99,7 +102,7 @@ try {
   // Synthetic household: long names, duplicates, steps, dates, pins, routines.
   await client.evaluate(`(async () => {
     const app = document.querySelector("kin-app");
-    const idle = async () => { for (let i = 0; (app.busy || app.refreshing || app.pendingRefresh) && i < 400; i++) await new Promise((r) => setTimeout(r, 10)); };
+    const idle = async () => { for (let i = 0; (app.busy || app.refreshing || app.pendingRefresh || app.wakePending) && i < 400; i++) await new Promise((r) => setTimeout(r, 10)); };
     const add = async (command) => { await app.ctx.append.appendCommand(command); await idle(); return app.state.items.at(-1); };
     const today = app.ctx.navigation.currentCivilDate();
     const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); })();

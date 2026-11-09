@@ -44,7 +44,7 @@ export const MANIFEST_NAME = "kin-home";
  * (the owner's choice for #722). `latest/download/` is the newest release;
  * an executable is fetched from its own tag. KIN_HOME_RELEASES overrides the
  * base for a fork that publishes its own releases, and for tests. */
-export const DEFAULT_RELEASES = "https://github.com/mnichols08/ZTM-Build-Fest/releases";
+export const DEFAULT_RELEASES = "https://github.com/mnichols08/kin-app/releases";
 export const MAX_MANIFEST_BYTES = 64 * 1024;
 const MAX_EXECUTABLE_BYTES = 1024 * 1024 * 1024;
 const TARGETS = Object.freeze(["linux-x64", "linux-arm64", "darwin-arm64", "darwin-x64", "win-x64"]);

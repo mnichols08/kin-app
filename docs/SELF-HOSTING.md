@@ -41,7 +41,8 @@ Changing the address later means every member sets up again.
 ## Run the service
 
 ```sh
-cd projects/kin
+git clone https://github.com/mnichols08/kin-app.git
+cd kin-app
 npm ci                               # Kin has no npm dependencies; this only confirms the lockfile
 sh build-wasm.sh                     # or ./build-wasm.ps1 on Windows
 KIN_ORIGIN=https://kin.example.org \
@@ -66,7 +67,7 @@ After=network-online.target
 
 [Service]
 User=kin
-WorkingDirectory=/opt/kin/projects/kin
+WorkingDirectory=/opt/kin
 Environment=NODE_ENV=production
 Environment=KIN_ORIGIN=https://kin.example.org
 Environment=KIN_DATA_DIR=/var/lib/kin
@@ -132,7 +133,7 @@ local trial; a public server needs `KIN_ORIGIN` and, behind a proxy,
 | `KIN_HOST` | `127.0.0.1` | Address to listen on. Keep it on loopback and let the proxy face the network. |
 | `KIN_PORT` | `8000` | Port to listen on. |
 | `KIN_ORIGIN` | `http://localhost:<port>` | The public origin members open. Must be `https://` unless it is localhost. Passkeys are bound to it. |
-| `KIN_DATA_DIR` | `projects/kin/.kin-data` | Directory for the database and its lock and sidecar files. Created at start. |
+| `KIN_DATA_DIR` | `.kin-data` | Directory for the database and its lock and sidecar files. Created at start. |
 | `KIN_DATABASE_PATH` | `<data dir>/kin.sqlite` | The database file itself, if you want a specific path. |
 | `KIN_TRUSTED_PROXIES` | empty | Proxy addresses whose `X-Forwarded-For` is believed (above). |
 | `KIN_ALLOW_NEW_HOUSEHOLDS` | `true` | `false` refuses every new household, for example once yours exists. Existing households and invitations into them keep working. |

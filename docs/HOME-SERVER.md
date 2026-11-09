@@ -495,7 +495,7 @@ transfer and returns a bearer token for it (two hours); `chunk`, `status`,
 ## Building the executables
 
 ```sh
-# from projects/kin, with Node 24.22.0 (the version the executables run on)
+# from the repository root, with Node 24.22.0 (the version the executables run on)
 ./build-wasm.sh                      # or: node scripts/fetch-wasm.mjs
 node scripts/build-sea.mjs           # all five targets
 node scripts/build-sea.mjs --target darwin-arm64,darwin-x64
@@ -777,7 +777,7 @@ without it.
 ## The container image
 
 ```sh
-# from projects/kin
+# from the repository root
 docker build -f deploy/home/Dockerfile -t kin-home .
 docker run -d --name kin --restart unless-stopped -v kin-data:/data kin-home
 docker inspect -f '{{.State.Health.Status}}' kin
@@ -838,7 +838,7 @@ for them. Until then, replace the executable and restart the service
 **Checking.** Once a day the launcher fetches
 `kin-home-manifest.json` and its signature `kin-home-manifest.json.sig` from
 the newest release on GitHub
-(`https://github.com/mnichols08/ZTM-Build-Fest/releases/latest/download/…`;
+(`https://github.com/mnichols08/kin-app/releases/latest/download/…`;
 pre-releases are skipped), and checks the Ed25519 signature against the
 release key built into Kin before reading anything else. The manifest names
 the version, the oldest version that may update to it, and each platform's

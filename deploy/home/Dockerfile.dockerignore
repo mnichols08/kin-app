@@ -1,4 +1,4 @@
-# Build context is projects/kin (deploy/home/Dockerfile). Only Cargo/rust,
+# Build context is the repository root (deploy/home/Dockerfile). Only Cargo/rust,
 # server, web, package.json, relay/ktun.mjs and the executable's build
 # script are used.
 .git

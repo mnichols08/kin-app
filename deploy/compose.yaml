@@ -1,5 +1,5 @@
 # Kin test server: Kin plus Caddy for HTTPS (deploy/README.md).
-#   cd projects/kin/deploy && cp .env.example .env   # then edit .env
+#   cd deploy && cp .env.example .env   # then edit .env
 #   docker compose up -d --build
 name: kin
 

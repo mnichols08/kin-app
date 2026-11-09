@@ -52,13 +52,13 @@ server. The steps below are the parts only the account owner can do.
 
 ```sh
 ssh ubuntu@<public IP>
-curl -fsSLO https://raw.githubusercontent.com/mnichols08/ZTM-Build-Fest/kin-development/projects/kin/relay/deploy/install-ubuntu.sh
+curl -fsSLO https://raw.githubusercontent.com/mnichols08/kin-app/main/relay/deploy/install-ubuntu.sh
 sudo RELAY_EMAIL=you@example.org RELAY_ABUSE=abuse@example.org bash install-ubuntu.sh
 ```
 
-That URL works once `relay/deploy/` is on `kin-development`. Before then,
-copy the script from a checkout of the branch that has it instead:
-`scp projects/kin/relay/deploy/install-ubuntu.sh ubuntu@<public IP>:`.
+To install from another branch, copy the script from a checkout of it
+instead (`scp relay/deploy/install-ubuntu.sh ubuntu@<public IP>:`) and set
+`RELAY_REF` to that branch.
 
 `RELAY_EMAIL` is the address Let's Encrypt writes to about the relay's own
 certificate. `RELAY_ABUSE` is the abuse address the relay shows on every
@@ -114,7 +114,7 @@ curl https://relay.kin.journeytocode.io/         # "Kin connection relay for hom
 - **Status and logs:** `systemctl status kin-relay`, `journalctl -u kin-relay`.
   The relay logs only its start and certificate reloads, by design.
 - **Updates:** run the script again; it installs the relay from
-  `kin-development` (or `RELAY_REF`) and restarts it. The registry is kept.
+  `main` (or `RELAY_REF`) and restarts it. The registry is kept.
 - **Its own certificate** renews through certbot's timer. The relay stops
   for the few seconds certbot needs port 80, and home servers reconnect on
   their own.

@@ -1,19 +1,15 @@
-// The repository-root workflow is the one GitHub runs; this project keeps a
-// reference copy (docs/ci). They must not drift apart (#326).
+// .github/workflows/kin-verification.yml is the workflow GitHub runs; docs/ci
+// keeps a reference copy of it. They must not drift apart (#326).
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const projectCopy = new URL("../docs/ci/kin-verification.workflow.yml", import.meta.url);
-const activeCopy = new URL("../../../.github/workflows/kin-verification.yml", import.meta.url);
+const activeCopy = new URL("../.github/workflows/kin-verification.yml", import.meta.url);
 
-test("the active Kin workflow matches its reference copy", async (t) => {
-  let active;
+test("the active Kin workflow matches its reference copy", async () => {
   // Compared as LF: a Windows checkout may give either copy CRLF endings.
-  try { active = (await readFile(activeCopy, "utf8")).replace(/\r\n/g, "\n"); } catch {
-    t.skip("not inside the parent repository");
-    return;
-  }
+  const active = (await readFile(activeCopy, "utf8")).replace(/\r\n/g, "\n");
   const reference = (await readFile(projectCopy, "utf8")).replace(/\r\n/g, "\n").split("\n");
   // The reference copy starts with a three-line note saying what it is.
   assert.match(reference[0], /^# Reference copy/);
@@ -27,4 +23,12 @@ test("every third-party action is pinned to a full commit", async () => {
   // owner/repo, or owner/repo/path for an action in a subdirectory (such as
   // gradle/actions/setup-gradle), always at a full commit.
   for (const action of uses) assert.match(action, /^[\w.-]+\/[\w.-]+(\/[\w.-]+)*@[0-9a-f]{40}$/, `${action} is pinned by commit`);
+});
+
+test("the workflow runs from the repository root on the kin-app branches", async () => {
+  const workflow = (await readFile(projectCopy, "utf8")).replace(/\r\n/g, "\n");
+  // Kin is the whole repository: no job reaches into a projects/ subfolder.
+  assert.doesNotMatch(workflow, /projects\/kin/);
+  // Every pull request is checked; pushes to main and testing are checked.
+  assert.match(workflow, /^on:\n  pull_request:\n  push:\n    branches: \[main, testing\]\n  workflow_dispatch:\n/m);
 });

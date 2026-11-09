@@ -8,7 +8,6 @@
 
 ## Checklist
 
-- [ ] Every changed path is under `projects/kin/`.
 - [ ] The change does one thing; anything else is a separate issue or PR.
 - [ ] No new dependency, or its justification is written above.
 - [ ] Household text and imported data stay untrusted (rendered as text, never HTML); no secrets, real household data or storage dumps in code, fixtures, screenshots or logs.

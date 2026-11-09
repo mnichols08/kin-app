@@ -369,8 +369,7 @@ setup still starts with the recovery key.
 
 ## Reproducible verification
 
-From either the repository root or `projects/kin/`, run `npm run verify
---prefix projects/kin` at the repository root or `npm run verify` inside Kin.
+From the repository root, run `npm run verify`.
 The gate requires Node `>=24.16.0`, the active pinned Rust toolchain from
 `rust-toolchain.toml`, Cargo, Git, Python `>=3.11` for the existing version
 check, and the `wasm32-unknown-unknown` target. It runs formatting,
@@ -393,10 +392,10 @@ Edge and Linux Chrome.
 
 The default mandatory local gate is `verify`; browser regressions are an
 explicit second command. `node --test scripts/verify.test.mjs` runs focused
-tests for the verification runner itself (they are also part of the gate). The active root workflow is
-`.github/workflows/kin-verification.yml`; a synchronized project-local reference
-is retained at `docs/ci/kin-verification.workflow.yml`. Pull requests that
-change Kin or its workflow, and pushes to `kin-development`, run three jobs
+tests for the verification runner itself (they are also part of the gate). The active workflow is
+`.github/workflows/kin-verification.yml`; a synchronized reference copy is
+kept at `docs/ci/kin-verification.workflow.yml`. Every pull request, and
+pushes to `main` and `testing`, run three jobs
 (#329):
 
 - `verify` (Windows): stages A–D (environment, static checks, every Node and
@@ -486,7 +485,7 @@ disables the controls or moves focus.
 ### Test health over time
 
 `node scripts/test-health.mjs` (needs `GITHUB_TOKEN` or `gh auth login`)
-reads the last 20 completed `kin-development` runs of Kin verification and
+reads the last 20 completed `main` runs of Kin verification and
 prints, per job, how many passed first time, passed only on retry (FLAKY) and
 failed, worst first, with the run links. Options: `--runs N` (1–100),
 `--branch NAME`, `--repo OWNER/NAME`. It reads the latest attempt of each
@@ -628,7 +627,7 @@ markers; and pre-marker grants.
 
 ```powershell
 $kinBrowser = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-node projects/kin/scripts/household-authority-regression.mjs $kinBrowser
+node scripts/household-authority-regression.mjs $kinBrowser
 ```
 
 Results and limits are recorded in
@@ -704,19 +703,19 @@ established browser and security regressions. Use an isolated browser profile
 and synthetic households only.
 
 ```powershell
-npm run test:server --prefix projects/kin
-cargo fmt --manifest-path projects/kin/Cargo.toml -- --check
-cargo clippy --manifest-path projects/kin/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path projects/kin/Cargo.toml
-cargo build --manifest-path projects/kin/Cargo.toml --target wasm32-unknown-unknown --release
-Copy-Item projects/kin/target/wasm32-unknown-unknown/release/kin.wasm projects/kin/web/wasm/kin_engine.wasm
-node --test (rg --files projects/kin/server projects/kin/web -g '*.test.mjs')
-python projects/kin/scripts/check_version.py
+npm run test:server
+cargo fmt -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --target wasm32-unknown-unknown --release
+Copy-Item target/wasm32-unknown-unknown/release/kin.wasm web/wasm/kin_engine.wasm
+node --test (rg --files server web -g '*.test.mjs')
+python scripts/check_version.py
 $kinBrowser = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-node projects/kin/scripts/browser-regression.mjs $kinBrowser
-node projects/kin/scripts/security-storage-regression.mjs $kinBrowser
-node projects/kin/scripts/security-ui-regression.mjs $kinBrowser
-node projects/kin/scripts/passkey-regression.mjs $kinBrowser
+node scripts/browser-regression.mjs $kinBrowser
+node scripts/security-storage-regression.mjs $kinBrowser
+node scripts/security-ui-regression.mjs $kinBrowser
+node scripts/passkey-regression.mjs $kinBrowser
 ```
 
 The server gate covers schema 1→2 migration and rollback, lifecycle state
@@ -743,8 +742,8 @@ Install the locked native dependency once, then run the service suite from the
 repository root:
 
 ```powershell
-npm ci --prefix projects/kin
-npm run test:server --prefix projects/kin
+npm ci
+npm run test:server
 ```
 
 The suite includes file-backed migration rollback and unsupported-schema tests,
@@ -783,18 +782,18 @@ runners use isolated temporary profiles and synthetic text/credentials. They do
 not bypass production recovery, storage encryption or WebAuthn verification.
 
 ```powershell
-cargo fmt --manifest-path projects/kin/Cargo.toml -- --check
-cargo clippy --manifest-path projects/kin/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path projects/kin/Cargo.toml
-cargo build --manifest-path projects/kin/Cargo.toml --target wasm32-unknown-unknown --release
-Copy-Item projects/kin/target/wasm32-unknown-unknown/release/kin.wasm projects/kin/web/wasm/kin_engine.wasm
-node --test (rg --files projects/kin/server projects/kin/web -g '*.test.mjs')
-python projects/kin/scripts/check_version.py
+cargo fmt -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --target wasm32-unknown-unknown --release
+Copy-Item target/wasm32-unknown-unknown/release/kin.wasm web/wasm/kin_engine.wasm
+node --test (rg --files server web -g '*.test.mjs')
+python scripts/check_version.py
 $kinBrowser = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-node projects/kin/scripts/browser-regression.mjs $kinBrowser
-node projects/kin/scripts/security-storage-regression.mjs $kinBrowser
-node projects/kin/scripts/security-ui-regression.mjs $kinBrowser
-node projects/kin/scripts/passkey-regression.mjs $kinBrowser
+node scripts/browser-regression.mjs $kinBrowser
+node scripts/security-storage-regression.mjs $kinBrowser
+node scripts/security-ui-regression.mjs $kinBrowser
+node scripts/passkey-regression.mjs $kinBrowser
 ```
 
 The version check keeps the published Kin release anchors separate from an
@@ -897,7 +896,7 @@ The Rust reducer must be testable without a browser or WebAssembly runtime. Use 
 The browser bridge's focused encoding/Unicode regression tests use Node's built-in test runner (no npm dependencies):
 
 ```text
-node --test projects/kin/web/wasm/kin-engine.test.mjs
+node --test web/wasm/kin-engine.test.mjs
 ```
 
 ## ABI/protocol tests
@@ -909,7 +908,7 @@ Verify null/zero pointers, undersized and oversized buffers, overflow-safe range
 The browser regression runner uses Node 22+ built-ins and a local Chromium-family executable. Build WASM first, then run from the repository root (PowerShell example):
 
 ```powershell
-node projects/kin/scripts/browser-regression.mjs 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+node scripts/browser-regression.mjs 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 ```
 
 It starts a loopback static server and an isolated headless browser profile, runs against the shipped CSP and real Rust/WASM/IndexedDB, and removes its temporary profile afterward. It does not access the user's existing Kin database. No npm install is needed. The runner fails on assertion errors, uncaught browser errors, CSP errors, or third-party page requests; the automatic favicon 404 is ignored.
@@ -1029,7 +1028,7 @@ Architecture/product/privacy audit confirms Rust-only reduction; separate Item/H
 
 Pulse coverage is in rust/src/pulse_tests.rs, web/wasm/kin-engine.test.mjs and scripts/pulse-regression.mjs, called by the complete browser runner. All prior regressions remain; actual milestone evidence and gaps are in V0.5.0. See [V0.5.0](planning/V0.5.0.md).
 
-Optional local visual evidence: set `KIN_VISUAL_CHECK=1` when running the browser regression script. Screenshots are written only to ignored `projects/kin/target/pulse-active-320.png` and `pulse-change-320.png`. They contain synthetic regression data.
+Optional local visual evidence: set `KIN_VISUAL_CHECK=1` when running the browser regression script. Screenshots are written only to ignored `target/pulse-active-320.png` and `pulse-change-320.png`. They contain synthetic regression data.
 
 ## v0.6.0 Since You Last Looked
 
@@ -1090,7 +1089,7 @@ timestamp, date-only UI label, and update after an effective change.
 
 ## v0.25.0 Search & Filters
 
-Run `node --test projects/kin/web/search.test.mjs` for case-insensitive
+Run `node --test web/search.test.mjs` for case-insensitive
 substring matching across unarchived household text, active checklist Steps,
 combined Item-only filters, unassigned Areas, empty queries, and the 100-result
 display bound. The full Edge browser regression verifies labeled keyboard
@@ -1113,11 +1112,11 @@ real IndexedDB persistence. No storage migration is expected.
 Run from the repository root after the release WASM build:
 
 ```powershell
-cargo test --manifest-path projects/kin/Cargo.toml
-node --test projects/kin/web/sync/crypto.test.mjs
-node --test projects/kin/server/pairing-service.test.mjs projects/kin/server/pairing-sync-keys.test.mjs projects/kin/server/sync-service.test.mjs projects/kin/server/sync-http.test.mjs projects/kin/server/sync-e2e.test.mjs
-node --test projects/kin/web/wasm/kin-engine.test.mjs projects/kin/web/wasm/routines.test.mjs projects/kin/web/wasm/modes.test.mjs
-node projects/kin/scripts/browser-regression.mjs 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+cargo test
+node --test web/sync/crypto.test.mjs
+node --test server/pairing-service.test.mjs server/pairing-sync-keys.test.mjs server/sync-service.test.mjs server/sync-http.test.mjs server/sync-e2e.test.mjs
+node --test web/wasm/kin-engine.test.mjs web/wasm/routines.test.mjs web/wasm/modes.test.mjs
+node scripts/browser-regression.mjs 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 ```
 
 The release gate includes: exact canonical-byte encrypt/relay/decrypt roundtrip; ciphertext opacity; wrong-key, wrong-AAD/identity, modified nonce/tag/signature, wrong recipient, and expiry failures; same-member and new-member device enrollment; duplicate/mismatched provisioning retries; revocation and stale-session rejection; single-winner epoch CAS and the 128-epoch bound; 16-device/128-grant bounds; equal-Lamport delivery in different arrival orders; archive/concurrent-mutation conflict behavior; local clock advancement; exact-envelope retries after relay cursor reset; crash-safe remote event/replay/cursor commit; catch-up cursor independence; non-destructive v1→v2 IndexedDB migration; CSP, accessibility modes, and legacy v1-v7 compatibility.

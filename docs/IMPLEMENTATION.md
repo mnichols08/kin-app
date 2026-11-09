@@ -5,7 +5,7 @@
 ## Proposed project layout
 
 ```text
-projects/kin/
+kin-app/
 ├── AGENTS.md
 ├── README.md
 ├── CHANGELOG.md

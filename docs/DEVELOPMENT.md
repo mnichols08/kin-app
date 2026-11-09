@@ -5,10 +5,10 @@
 ## Build and run
 
 ```text
-clone the ZTM Build Fest repository
+clone mnichols08/kin-app
         |
         v
-work inside projects/kin/
+work at the repository root
         |
         v
 install rustup/Cargo and the wasm32-unknown-unknown target
@@ -26,11 +26,11 @@ build the Rust/WASM module using the project-local manifest
 From the repository root in PowerShell:
 
 ```powershell
-npm ci --prefix projects/kin
-./projects/kin/run.ps1
+npm ci
+./run.ps1
 ```
 
-The launcher builds the WASM module and serves the web app at `http://localhost:8000`; press Ctrl+C to stop it. On macOS/Linux, run `sh projects/kin/run.sh` from the repository root. Never run Cargo from the Build Fest repository root for Kin; generated artifacts belong under `projects/kin/`.
+The launcher builds the WASM module and serves the web app at `http://localhost:8000`; press Ctrl+C to stop it. On macOS/Linux, run `sh run.sh` from the repository root. Generated artifacts belong under the ignored `target/` and `web/wasm/` paths.
 
 Wait for the server's `service_ready` event before opening the app. A
 `startup_failed` event with `outcome: "listen_failed"` includes the attempted
@@ -182,7 +182,7 @@ no alpha, #540), is drawn from the same geometry by
 
 Use synthetic household text only. Never copy private family messages, health details, credentials, or real household history into test fixtures, screenshots, bug reports, or logs. Local test data can be removed through the browser's site-data controls for the local origin. No database-wide clear command is provided; use isolated temporary databases for tests and the in-app deletion flow for real household data.
 
-The service database defaults to `projects/kin/.kin-data/kin.sqlite`, outside
+The service database defaults to `.kin-data/kin.sqlite`, outside
 the static web root. `KIN_DATA_DIR` or `KIN_DATABASE_PATH` can select another
 location. The production server holds an exclusive adjacent
 `<database-path>.service.lock`. Backup and restore share an adjacent

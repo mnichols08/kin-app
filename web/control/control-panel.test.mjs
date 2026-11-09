@@ -119,7 +119,7 @@ const STATUS = Object.freeze({
   },
   updates: { state: "up-to-date", stage: null, current: "1.6.0", checkedAt: "2026-10-22T11:00:00.000Z", available: null, autoUpdate: true, cannotInstall: null, lastError: null, lastUpdate: null },
 });
-const AVAILABLE = Object.freeze({ version: "1.6.1", kind: "patch", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/ZTM-Build-Fest/releases/tag/kin-v1.6.1", blocked: null, install: "automatic" });
+const AVAILABLE = Object.freeze({ version: "1.6.1", kind: "patch", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/kin-app/releases/tag/kin-v1.6.1", blocked: null, install: "automatic" });
 
 test("the status page: every section, plain-words states, backups, and the seam for updates", TIMEOUT, () => {
   const element = document.createElement("kin-control-status");

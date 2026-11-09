@@ -470,7 +470,7 @@ test("updates (#722): the launcher's status is shown, and installing or automati
   mkdir(join(context.dataDirectory, "updates"), { recursive: true });
   write(join(context.dataDirectory, "updates", "status.json"), JSON.stringify({
     format: 1, state: "available", stage: null, current: "1.6.0", checkedAt: "2026-11-02T12:00:00.000Z", autoUpdate: true, cannotInstall: null,
-    available: { version: "2.0.0", kind: "major", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/ZTM-Build-Fest/releases/tag/kin-v2.0.0", blocked: null, install: "admin" },
+    available: { version: "2.0.0", kind: "major", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/kin-app/releases/tag/kin-v2.0.0", blocked: null, install: "admin" },
     lastError: null, lastUpdate: null, failedVersion: null,
   }));
   const updates = context.panel.status().updates;

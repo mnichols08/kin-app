@@ -2,7 +2,7 @@
 # the downloads (scripts/build-sea.mjs), on a distroless base that holds
 # glibc and the C++ runtime node needs and nothing else: no shell, no package
 # manager. It runs as an unprivileged user, keeps its data in the /data
-# volume and checks its own health. Build from projects/kin:
+# volume and checks its own health. Build from the repository root:
 #
 #   docker build -f deploy/home/Dockerfile -t kin-home .
 #   docker run -d --name kin --restart unless-stopped -v kin-data:/data kin-home

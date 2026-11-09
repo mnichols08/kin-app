@@ -5,8 +5,8 @@
 **Current implementation line: `v1.6.0` — Kin for Everyone**, released
 2026-10-21 as `kin-v1.6.0`. A hosted instance runs at
 <https://kin.journeytocode.io>, and you can [run your own](#run-kin-on-your-own-server).
-Kin is an entry in the ZTM Build Fest and lives in this repository under
-`projects/kin/`; treat that folder as the project root.
+Kin began as an entry in the ZTM Build Fest and now lives in its own
+repository, [mnichols08/kin-app](https://github.com/mnichols08/kin-app).
 
 - [What Kin is](#what-kin-is)
 - [What it does today](#what-it-does-today)
@@ -85,7 +85,7 @@ You need:
   CI validates Edge and Chrome; Firefox and Safari are expected to work but
   are not certified.
 
-Then, from `projects/kin/`:
+Then, from the repository root:
 
 ```powershell
 # Windows (PowerShell)
@@ -140,13 +140,13 @@ npm run verify:browser    # plus the browser suites, in an installed Edge, Chrom
 ```
 
 The same gate runs in CI as the "Kin verification" workflow on every pull
-request that touches `projects/kin/`. [TESTING](docs/TESTING.md) explains the
+request and on pushes to `main` and `testing`. [TESTING](docs/TESTING.md) explains the
 suites, how to run one of them on its own, and what to do about a flake.
 
 ## Repository layout
 
 ```text
-projects/kin/
+kin-app/
 ├── rust/           The household engine: events, replay, validation (Rust → WASM)
 ├── web/            The app: components/ (Web Components), wasm/ (engine loaders),
 │                   styles/, service-worker.js, privacy.html
@@ -212,10 +212,9 @@ like and how a pull request is checked. The project follows a
 [Code of Conduct](CODE_OF_CONDUCT.md); [SUPPORT](SUPPORT.md) says where to ask
 questions.
 
-Because Kin is nested in the ZTM Build Fest repository, its community files
-and issue templates live in `projects/kin/` and `projects/kin/.github/`.
-GitHub does not apply nested templates automatically; see
-[GITHUB-COMMUNITY](docs/GITHUB-COMMUNITY.md).
+Pull requests go into `main`; the `testing` branch is what the test server
+deploys ([CONTRIBUTING](CONTRIBUTING.md#where-things-live)). The community
+files are described in [GITHUB-COMMUNITY](docs/GITHUB-COMMUNITY.md).
 
 ## License
 
@@ -223,8 +222,12 @@ Kin is available under the [MIT License](LICENSE).
 
 ## Release history
 
-Every release is tagged `kin-vX.Y.Z` in this repository. The
-[changelog](CHANGELOG.md) has the detail; the lines so far:
+Every release is tagged `kin-vX.Y.Z`. Releases up to `kin-v1.6.0` were tagged
+in `mnichols08/ZTM-Build-Fest`, where Kin lived under `projects/kin/` until
+November 2026; later releases are tagged on `main` here. Issue and PR numbers
+from before November 2026 (`#708` and so on, in the changelog and the docs)
+refer to `mnichols08/ZTM-Build-Fest`. The [changelog](CHANGELOG.md) has the
+detail; the lines so far:
 
 - **v1.6.0 — Kin for Everyone** (2026-10-21): easy mode, Help on every screen,
   household features an admin can switch off, reports and suggestions from

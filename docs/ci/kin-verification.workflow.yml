@@ -1,18 +1,12 @@
-# Reference copy of the active repository-root Kin workflow.
-# Keep this project-local documentation synchronized with
-# /.github/workflows/kin-verification.yml.
+# Reference copy of the active Kin workflow. Keep it synchronized with
+# .github/workflows/kin-verification.yml (scripts/ci-workflow.test.mjs
+# fails if the two drift apart).
 name: Kin verification
 
 on:
   pull_request:
-    paths:
-      - "projects/kin/**"
-      - ".github/workflows/kin-verification.yml"
   push:
-    branches: [kin-development]
-    paths:
-      - "projects/kin/**"
-      - ".github/workflows/kin-verification.yml"
+    branches: [main, testing]
   workflow_dispatch:
 
 permissions:
@@ -39,16 +33,13 @@ jobs:
           rustup toolchain install 1.93.0 --profile minimal --component rustfmt --component clippy --target wasm32-unknown-unknown
           rustup default 1.93.0
       - name: Install Kin dependencies
-        working-directory: projects/kin
         run: npm ci
       # Stage C's engine tests load the browser engine, so it is built first.
       - name: Prepare ignored WASM asset for the engine tests
-        working-directory: projects/kin
         run: ./build-wasm.ps1
       # Stages A–D on Windows. The browser suites run in the `browser` jobs
       # below, in parallel, on Windows Edge and Linux Chrome (#329).
       - name: Run verification
-        working-directory: projects/kin
         shell: pwsh
         # On failure, the failing lines and the end of the output are also
         # reported as annotations, which the checks API returns even where
@@ -93,10 +84,8 @@ jobs:
           rustup toolchain install 1.93.0 --profile minimal --component rustfmt --component clippy --target wasm32-unknown-unknown
           rustup default 1.93.0
       - name: Install Kin dependencies
-        working-directory: projects/kin
         run: npm ci
       - name: Exercise Linux WASM launcher
-        working-directory: projects/kin
         run: |
           ./build-wasm.sh
           sha256sum web/wasm/kin_engine.wasm | tee web/wasm/kin_engine.wasm.sha256
@@ -108,12 +97,11 @@ jobs:
         with:
           name: kin-engine-wasm
           path: |
-            projects/kin/web/wasm/kin_engine.wasm
-            projects/kin/web/wasm/kin_engine.wasm.sha256
+            web/wasm/kin_engine.wasm
+            web/wasm/kin_engine.wasm.sha256
           if-no-files-found: error
           retention-days: 30
       - name: Run browserless verification
-        working-directory: projects/kin
         # As on Windows: on failure, report the failing lines and the end of
         # the output as annotations the checks API can return (#164).
         run: |
@@ -174,7 +162,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -186,7 +173,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kin-engine-wasm
-          path: projects/kin/web/wasm
+          path: web/wasm
       - name: Check the engine against its recorded hash
         run: sha256sum -c web/wasm/kin_engine.wasm.sha256
       - name: Run the browser suite
@@ -243,7 +230,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -302,8 +288,8 @@ jobs:
         with:
           name: kin-android-debug
           path: |
-            projects/kin/android/app/build/outputs/apk/debug/app-debug.apk
-            projects/kin/android/app/build/outputs/bundle/debug/app-debug.aab
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/debug/app-debug.aab
           if-no-files-found: error
           retention-days: 14
 
@@ -318,7 +304,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -330,7 +315,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kin-engine-wasm
-          path: projects/kin/web/wasm
+          path: web/wasm
       - name: Check the engine against its recorded hash
         run: sha256sum -c web/wasm/kin_engine.wasm.sha256
       - name: Capture the Play Store screenshots
@@ -383,7 +368,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -395,7 +379,7 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kin-engine-wasm
-          path: projects/kin/web/wasm
+          path: web/wasm
       - name: Check the engine against its recorded hash
         run: sha256sum -c web/wasm/kin_engine.wasm.sha256
       - name: Download the Windows service host
@@ -419,7 +403,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kin-home-executables
-          path: projects/kin/target/sea/dist
+          path: target/sea/dist
           if-no-files-found: error
           retention-days: 7
 
@@ -451,7 +435,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     env:
       # annotate LEVEL TITLE TEXT: the last 30 lines of TEXT as one
       # annotation (titles avoid ':' and ',').
@@ -476,12 +459,12 @@ jobs:
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kin-engine-wasm
-          path: projects/kin/web/wasm
+          path: web/wasm
       - name: Download the executables built on Linux
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: kin-home-executables
-          path: projects/kin/target/sea/linux
+          path: target/sea/linux
       - name: Download the Windows service host
         if: runner.os == 'Windows'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -632,7 +615,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -668,7 +650,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: projects/kin/tools/kin-service-host
+        working-directory: tools/kin-service-host
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -690,13 +672,13 @@ jobs:
         run: cargo build --locked --release
       - name: Run it as a Windows service
         if: runner.os == 'Windows'
-        working-directory: projects/kin
+        working-directory: .
         run: node scripts/service-host-smoke.mjs tools/kin-service-host/target/release/kin-service-host.exe
       - name: Keep the host
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: kin-service-host-windows-x64
-          path: projects/kin/tools/kin-service-host/target/release/kin-service-host.exe
+          path: tools/kin-service-host/target/release/kin-service-host.exe
           if-no-files-found: error
           retention-days: 7

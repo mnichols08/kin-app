@@ -3,8 +3,8 @@
 # Caddy inside the container takes Railway's traffic on $PORT and passes it
 # to Kin on 127.0.0.1:8000. Railway's edge terminates HTTPS.
 #
-# It lives at the project root so Railway finds it automatically once the
-# service's Root Directory is projects/kin; no Dockerfile path setting is
+# It lives at the repository root so Railway finds it automatically with the
+# service's Root Directory left empty; no Dockerfile path setting is
 # needed. Attach a volume at /data. (deploy/Dockerfile is the separate image
 # for running Kin on your own server with deploy/compose.yaml.)
 FROM rust:1.93.0-slim AS wasm

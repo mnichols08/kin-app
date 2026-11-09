@@ -5,7 +5,25 @@ development candidates that never received a release tag; their changes
 ship in v1.0.0. The project's planning releases v0.0.1–v0.0.12 are
 documentation only.
 
+Issue and PR numbers before November 2026 (`#708` and so on) refer to
+[mnichols08/ZTM-Build-Fest](https://github.com/mnichols08/ZTM-Build-Fest),
+where Kin lived under `projects/kin/`; so do the tags up to `kin-v1.6.0`.
+
 ## Unreleased
+
+### Changed
+
+- **Kin moved to its own repository**, `mnichols08/kin-app`, with the
+  project at the repository root (it was `projects/kin/` in
+  `mnichols08/ZTM-Build-Fest`). Pull requests go into `main`; the `testing`
+  branch feeds the test server; release tags (`kin-vX.Y.Z`, unchanged) are
+  made on `main`. The Kin verification workflow now runs from the root, on
+  every pull request and on pushes to `main` and `testing`, and its
+  copy-comparison test no longer skips. The home server's updater, the
+  relay installer, `scripts/fetch-wasm.mjs` and `scripts/test-health.mjs`
+  default to kin-app (`main`), and the docs, Dockerfile comments, Railway
+  setup and community files describe the new home. The rules that kept
+  changes inside `projects/kin/` are gone.
 
 ### Added
 

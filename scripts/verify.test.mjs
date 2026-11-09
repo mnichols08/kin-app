@@ -164,10 +164,9 @@ test("missing required browser is a failure and optional browser stage is NOT RU
   assert.equal(messages.some((message) => message.includes("NOT RUN E — Browser verification")), true);
 });
 
-test("test discovery is deterministic and works from repository and Kin directory paths", async () => {
+test("test discovery is deterministic", async () => {
   const fromProject = await collectNodeTests(PROJECT_ROOT);
-  const fromRepository = await collectNodeTests(join(PROJECT_ROOT));
-  assert.deepEqual(fromRepository, fromProject);
+  assert.deepEqual(await collectNodeTests(PROJECT_ROOT), fromProject);
   assert.ok(fromProject.some((path) => path.endsWith(join("server", "durable-sync-integrity.test.mjs"))));
   assert.ok(fromProject.some((path) => path.endsWith(join("scripts", "v1-compatibility.test.mjs"))));
   assert.ok(fromProject.some((path) => path.endsWith(join("relay", "sni.test.mjs"))), "the connection relay's tests are in the gate (#728)");
@@ -193,9 +192,9 @@ test("test discovery is deterministic and works from repository and Kin director
   }
 });
 
-test("the entry point resolves paths from the repository root and the Kin directory", async () => {
+test("the entry point resolves paths from the repository root and from a subdirectory", async () => {
   const script = join(PROJECT_ROOT, "scripts", "verify.mjs");
-  for (const cwd of [join(PROJECT_ROOT, "..", ".."), PROJECT_ROOT]) {
+  for (const cwd of [PROJECT_ROOT, join(PROJECT_ROOT, "scripts")]) {
     const result = await new Promise((resolveResult) => {
       const child = spawn(process.execPath, [script], { cwd, stdio: ["ignore", "pipe", "pipe"] });
       let stdout = "";

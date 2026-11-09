@@ -12,8 +12,8 @@
 #   RELAY_ABUSE    (required)                  abuse address on the status page;
 #                                              a read mailbox outside RELAY_ZONE
 #   RELAY_IP       found from the internet     the VM's public IPv4
-#   RELAY_REPO     https://github.com/mnichols08/ZTM-Build-Fest.git
-#   RELAY_REF      kin-development             branch or tag to install from
+#   RELAY_REPO     https://github.com/mnichols08/kin-app.git
+#   RELAY_REF      main                        branch or tag to install from
 #   NODE_VERSION   24.22.0                     the Node.js the relay runs on
 #
 # It stops before asking for a certificate until the DNS records point at
@@ -24,8 +24,8 @@ RELAY_NAME=${RELAY_NAME:-relay.kin.journeytocode.io}
 RELAY_ZONE=${RELAY_ZONE:-home.kin.journeytocode.io}
 RELAY_EMAIL=${RELAY_EMAIL:-}
 RELAY_ABUSE=${RELAY_ABUSE:-}
-RELAY_REPO=${RELAY_REPO:-https://github.com/mnichols08/ZTM-Build-Fest.git}
-RELAY_REF=${RELAY_REF:-kin-development}
+RELAY_REPO=${RELAY_REPO:-https://github.com/mnichols08/kin-app.git}
+RELAY_REF=${RELAY_REF:-main}
 NODE_VERSION=${NODE_VERSION:-24.22.0}
 
 APP_DIR=/opt/kin/relay
@@ -96,15 +96,15 @@ fi
 say "Relay code from $RELAY_REF"
 tmp=$(mktemp -d)
 git clone -q --depth 1 --filter=blob:none --sparse --branch "$RELAY_REF" "$RELAY_REPO" "$tmp/repo"
-git -C "$tmp/repo" sparse-checkout set projects/kin/relay
+git -C "$tmp/repo" sparse-checkout set relay
 mkdir -p "$APP_DIR"
 # Only the relay's own modules: no tests, test fixtures or test helpers.
 find "$APP_DIR" -maxdepth 1 -name '*.mjs' -delete
-for file in "$tmp"/repo/projects/kin/relay/*.mjs; do
+for file in "$tmp"/repo/relay/*.mjs; do
   case "$file" in *.test.mjs) continue ;; esac
   install -m 0644 "$file" "$APP_DIR/"
 done
-install -m 0644 "$tmp/repo/projects/kin/relay/README.md" "$APP_DIR/"
+install -m 0644 "$tmp/repo/relay/README.md" "$APP_DIR/"
 echo "Installed $(git -C "$tmp/repo" rev-parse --short HEAD) into $APP_DIR"
 rm -rf "$tmp"
 

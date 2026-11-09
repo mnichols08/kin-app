@@ -27,8 +27,8 @@ test("only verify.mjs's flaky warnings count as flakes", () => {
 });
 
 test("the report reads as a table with where each problem happened", () => {
-  const text = formatReport(tally([{ url: "https://example/run/1", jobs: [job("verify", "failure"), job("browser (edge, a)", "success", ["a"])] }]), { branch: "kin-development", runCount: 1 });
-  assert.match(text, /^Kin verification on kin-development: last 1 completed runs/);
+  const text = formatReport(tally([{ url: "https://example/run/1", jobs: [job("verify", "failure"), job("browser (edge, a)", "success", ["a"])] }]), { branch: "main", runCount: 1 });
+  assert.match(text, /^Kin verification on main: last 1 completed runs/);
   assert.match(text, /verify\s+1\s+0\s+0\s+1\s+0%/);
   assert.match(text, /browser \(edge, a\)\s+1\s+0\s+1\s+0\s+100%/);
   assert.match(text, /verify — failed — https:\/\/example\/run\/1/);
@@ -45,7 +45,7 @@ test("collect reads runs, jobs and only successful jobs' annotations", async () 
     if (path.includes("/check-runs/70/")) return [{ annotation_level: "warning", title: "Flaky browser suite: x" }];
     throw new Error(`unexpected ${path}`);
   };
-  const runs = await collect({ repo: "o/r", branch: "kin-development", runCount: 20, github });
+  const runs = await collect({ repo: "o/r", branch: "main", runCount: 20, github });
   assert.deepEqual(runs, [{ id: 7, url: "https://example/run/7", jobs: [job("verify", "success", ["x"]), job("browser (edge, x)", "failure", [])] }]);
   assert.deepEqual(asked, ["/repos/o/r/actions/workflows/kin-verification.yml/runs", "/repos/o/r/actions/runs/7/jobs", "/repos/o/r/check-runs/70/annotations"]);
 });

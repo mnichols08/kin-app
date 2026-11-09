@@ -20,7 +20,7 @@ import { inflateRawSync } from "node:zlib";
 
 const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ARTIFACT = "kin-engine-wasm";
-const DEFAULT_REPO = "mnichols08/ZTM-Build-Fest";
+const DEFAULT_REPO = "mnichols08/kin-app";
 
 export class FetchWasmError extends Error {}
 

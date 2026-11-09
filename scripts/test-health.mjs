@@ -3,14 +3,14 @@
 // after a retry (FLAKY, from the warning annotation scripts/verify.mjs writes,
 // #328), or failed. Run on demand:
 //
-//   node scripts/test-health.mjs [--runs 20] [--branch kin-development] [--repo OWNER/NAME]
+//   node scripts/test-health.mjs [--runs 20] [--branch main] [--repo OWNER/NAME]
 //
 // Needs a GitHub token (GITHUB_TOKEN, GH_TOKEN or `gh auth token`). Reads only;
 // prints a table, worst first, and the runs each flake or failure came from.
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_REPO = "mnichols08/ZTM-Build-Fest";
+const DEFAULT_REPO = "mnichols08/kin-app";
 const WORKFLOW = "kin-verification.yml";
 const FLAKY_TITLE = "Flaky browser suite: ";
 
@@ -65,7 +65,7 @@ function token(env) {
   try { return execFileSync("gh", ["auth", "token"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() || null; } catch { return null; }
 }
 
-export async function collect({ repo = DEFAULT_REPO, branch = "kin-development", runCount = 20, github }) {
+export async function collect({ repo = DEFAULT_REPO, branch = "main", runCount = 20, github }) {
   const { workflow_runs: listed } = await github(`/repos/${repo}/actions/workflows/${WORKFLOW}/runs?branch=${encodeURIComponent(branch)}&status=completed&per_page=${runCount}`);
   const runs = [];
   for (const run of listed.slice(0, runCount)) {
@@ -84,7 +84,7 @@ export async function collect({ repo = DEFAULT_REPO, branch = "kin-development",
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = process.argv.slice(2);
   const option = (name, fallback) => { const at = args.indexOf(name); return at >= 0 ? args[at + 1] : fallback; };
-  const repo = option("--repo", DEFAULT_REPO), branch = option("--branch", "kin-development"), runCount = Number(option("--runs", "20"));
+  const repo = option("--repo", DEFAULT_REPO), branch = option("--branch", "main"), runCount = Number(option("--runs", "20"));
   const auth = token(process.env);
   if (!auth || !Number.isInteger(runCount) || runCount < 1 || runCount > 100) {
     console.error(!auth ? "Reading CI history needs a GitHub token: set GITHUB_TOKEN, or sign in with `gh auth login`." : "--runs must be 1 to 100.");

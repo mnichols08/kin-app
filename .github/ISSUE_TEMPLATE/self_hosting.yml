@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please read [SELF-HOSTING](https://github.com/mnichols08/ZTM-Build-Fest/blob/kin-development/projects/kin/docs/SELF-HOSTING.md) first; most questions about proxies, passkeys, backups and settings are answered there. Remove secrets (tokens, keys, private calendar links) from anything you paste.
+        Please read [SELF-HOSTING](https://github.com/mnichols08/kin-app/blob/main/docs/SELF-HOSTING.md) first; most questions about proxies, passkeys, backups and settings are answered there. Remove secrets (tokens, keys, private calendar links) from anything you paste.
   - type: dropdown
     id: how
     attributes:

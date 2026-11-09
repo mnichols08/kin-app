@@ -4,48 +4,29 @@
 
 ## What Kin provides
 
-At `projects/kin/`: the [README](../README.md), the MIT [LICENSE](../LICENSE),
+At the repository root: the [README](../README.md), the MIT [LICENSE](../LICENSE),
 [CONTRIBUTING](../CONTRIBUTING.md), a [Code of Conduct](../CODE_OF_CONDUCT.md)
 (Contributor Covenant 2.1 with Kin's privacy expectations added),
 [SECURITY](../SECURITY.md), [SUPPORT](../SUPPORT.md) and the
-[CHANGELOG](../CHANGELOG.md). Under `projects/kin/.github/`: issue forms for a
-bug report, a feature proposal and self-hosting help, a `config.yml` with
-contact links, and a pull request template.
+[CHANGELOG](../CHANGELOG.md). Under `.github/`: issue forms for a bug report,
+a feature proposal and self-hosting help, a `config.yml` with contact links,
+a pull request template and the
+[Kin verification](../.github/workflows/kin-verification.yml) workflow.
 
 Together these are what GitHub's *Community Standards* profile looks for in a
 repository, plus a changelog.
 
-## The monorepo limitation
+## History
 
-GitHub reads community files and issue templates from a repository's root,
-its `.github/` folder or `docs/`, not from a project subfolder. Kin's
-[repository boundary](../AGENTS.md#the-repository-boundary-hard-rule) forbids
-placing Kin-specific files at the root of the ZTM Build Fest repository, so:
+Until November 2026 Kin lived in the ZTM Build Fest repository
+(`mnichols08/ZTM-Build-Fest`) under `projects/kin/`. GitHub only reads
+community files from a repository's root, so the forms and templates were not
+offered automatically there. Since the move to `mnichols08/kin-app` they are.
 
-- Kin's issue forms and PR template are **not** offered automatically when
-  someone opens an issue or PR on the hosting repository. [SUPPORT](../SUPPORT.md)
-  and [CONTRIBUTING](../CONTRIBUTING.md) ask people to pick the form by hand
-  or copy its headings.
-- The hosting repository's Community Standards profile does not count Kin's
-  files.
-- GitHub's private vulnerability reporting, if enabled, belongs to the hosting
-  repository; Kin's security policy points there.
+## Still to check
 
-Do not work around this by editing root files or other participants'
-projects.
-
-## If Kin moves to its own repository
-
-Copy or move these to the new repository's root and verify that GitHub
-recognises each one:
-
-1. `README.md`, `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
-   `SECURITY.md`, `SUPPORT.md`, `CHANGELOG.md`.
-2. `.github/ISSUE_TEMPLATE/*.yml`, `.github/ISSUE_TEMPLATE/config.yml` and
-   `.github/pull_request_template.md`, replacing the absolute links in them
-   with relative ones.
-3. `docs/ci/kin-verification.workflow.yml` as `.github/workflows/`, with its
-   `working-directory` and path filters simplified; then remove the
-   monorepo-boundary wording from `AGENTS.md` and `CONTRIBUTING.md`.
-4. Enable private vulnerability reporting and update `SECURITY.md` to point
-   at it.
+- Private vulnerability reporting is a repository setting: enable it on
+  `mnichols08/kin-app` (Settings → Code security) so the first option in
+  [SECURITY](../SECURITY.md) works.
+- The contact links in `.github/ISSUE_TEMPLATE/config.yml` must be absolute
+  URLs; they point at `main`.

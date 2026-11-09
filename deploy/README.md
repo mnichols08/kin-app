@@ -51,10 +51,10 @@ docker ps            # nothing should still publish 0.0.0.0:80 or :443
 ## 2. Get the code and configure
 
 ```sh
-git clone https://github.com/mnichols08/ZTM-Build-Fest.git
-cd ZTM-Build-Fest
-git switch kin-testing        # the branch testers get; see railway/README.md#testing-branch
-cd projects/kin/deploy
+git clone https://github.com/mnichols08/kin-app.git
+cd kin-app
+git switch testing            # the branch testers get; see railway/README.md#testing-branch
+cd deploy
 cp .env.example .env
 nano .env            # set KIN_DOMAIN=kin.yourdomain.com
 ```
@@ -85,8 +85,8 @@ server and that ports 80 and 443 are open.
 ## Update to the latest code
 
 ```sh
-cd ZTM-Build-Fest && git pull
-cd projects/kin/deploy && docker compose up -d --build
+cd kin-app && git pull
+cd deploy && docker compose up -d --build
 ```
 
 If the site stops responding after an update, run `docker compose restart caddy`

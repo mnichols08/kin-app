@@ -1,6 +1,6 @@
 # Support
 
-Kin is a volunteer project built for the ZTM Build Fest. Questions and
+Kin is a volunteer project, first built for the ZTM Build Fest. Questions and
 reports are read, but there is no staffed support channel, support contract
 or guaranteed response time. The current release is v1.6.0 — Kin for
 Everyone (`kin-v1.6.0`, 2026-10-21).
@@ -17,8 +17,7 @@ Everyone (`kin-v1.6.0`, 2026-10-21).
 
 ## Where to ask
 
-Kin lives inside the ZTM Build Fest repository, so use that repository's
-issues and put `Kin:` at the start of the title.
+Use the issues of [mnichols08/kin-app](https://github.com/mnichols08/kin-app/issues).
 
 | For | Use |
 | --- | --- |
@@ -27,9 +26,6 @@ issues and put `Kin:` at the start of the title.
 | A proposal | The [feature proposal form](.github/ISSUE_TEMPLATE/feature_request.yml), or **Suggest something** inside Kin (household admins) |
 | A security problem | [SECURITY](SECURITY.md). Never a public issue. |
 | A conduct concern | [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) |
-
-GitHub does not apply nested issue forms automatically; if the form does not
-appear, copy its headings into a plain issue.
 
 ## What to include
 

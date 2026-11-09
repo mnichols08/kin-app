@@ -5,18 +5,25 @@ Standing instructions for AI coding agents and automated tools working on
 the task says otherwise. Human contributors: [CONTRIBUTING](CONTRIBUTING.md)
 says the same things in a friendlier order.
 
-## The repository boundary (hard rule)
+## The repository
 
-Kin lives inside the ZTM Build Fest repository at `projects/kin/`. Treat that
-folder as the project root and **change nothing outside it**: not the root
-`README.md`, not other participants' projects, no parent-level Cargo, npm,
-lockfile, editor, script, documentation or build files. The one authorized
-exception is `.github/workflows/kin-verification.yml` at the repository root,
-which is a synchronized copy of `docs/ci/kin-verification.workflow.yml` (a
-test fails if they drift). Do not widen that exception.
+Kin is the whole of `mnichols08/kin-app`; the repository root is the project
+root. Branches:
 
-Before finishing any task, run `git status` and `git diff`. Every changed path
-must start with `projects/kin/`. Revert anything else.
+- **`main`** is the default branch. Every change reaches it through a pull
+  request.
+- **`testing`** is what the test server deploys (Railway,
+  <https://kin.journeytocode.io>). The owner promotes `main` into it
+  ([deploy/railway](deploy/railway/README.md#testing-branch)).
+- **Release tags** are made on `main` ([below](#versions-tags-and-releases)).
+
+`.github/workflows/kin-verification.yml` is the CI workflow; its reference copy
+is `docs/ci/kin-verification.workflow.yml`. Change both together (a test
+fails if they drift).
+
+Until November 2026 Kin lived in `mnichols08/ZTM-Build-Fest` under
+`projects/kin/`. Issue and PR numbers before then (`#708` and so on) refer to
+that repository; leave them as they are.
 
 ## What Kin is
 
@@ -39,7 +46,7 @@ screens to ordinary household coordination.
 ## Where Kin is now
 
 The current release is **v1.6.0 — Kin for Everyone**, tagged `kin-v1.6.0`
-on 2026-10-21. [CHANGELOG](CHANGELOG.md) lists every release and what each
+on 2026-10-21 (in `mnichols08/ZTM-Build-Fest`, before the move). [CHANGELOG](CHANGELOG.md) lists every release and what each
 changed; its *Unreleased* section is where new work is recorded. Work after
 v1.0 is tracked as GitHub issues, not pre-assigned version numbers. The
 planning documents from v0.1 through the October 2026 push to v1.0 are
@@ -138,7 +145,7 @@ exception on record is Android's `androidbrowserhelper`
    (planned is never described as implemented), and add a line under
    *Unreleased* in the changelog.
 5. **Check the tree.** `git status` and `git diff` before you finish: only
-   `projects/kin/` paths, no generated artifacts that should be ignored, no
+   the paths the task needs, no generated artifacts that should be ignored, no
    household text or secrets in fixtures, screenshots or logs.
 
 Error handling: never swallow an unexpected failure. Errors are deterministic,
@@ -157,16 +164,20 @@ manufacture a patch. After `.3`, ask the owner before starting another
 capability.
 
 Every completed version gets an annotated `kin-vX.Y.Z` tag on its validated
-release commit (`git tag -l 'kin-v*'` lists them; the latest is `kin-v1.6.0`).
+release commit on `main`. The prefix stays: the home server's updater builds
+its download URLs from it. Tags up to the latest, `kin-v1.6.0`, are in
+`mnichols08/ZTM-Build-Fest`; later ones are made here
+([RELEASES](docs/RELEASES.md#where-releases-come-from)).
 Never use an un-prefixed tag; never move, force-update or reuse a pushed tag;
 fix a released mistake in a new patch. The release sequence:
 
 1. Complete the scope and its documentation.
 2. Run the gate and inspect `git status` and `git diff`.
-3. Commit the final state; the working tree is clean.
-4. Create the annotated tag on that exact commit, with a message such as
-   `Kin v1.6.0 — Kin for Everyone`.
-5. Push the commit and, only when authorized, the tag.
+3. Commit the final state and merge it into `main` by pull request; the
+   working tree is clean.
+4. Create the annotated tag on that exact commit on `main`, with a message
+   such as `Kin v1.6.0 — Kin for Everyone`.
+5. Push the tag, only when authorized.
 
 A release is complete only when its scope and checks pass, its commit exists
 and the tag points at it. Never claim a push that did not happen; if a push
@@ -179,18 +190,15 @@ this file and the app shell; update all of them together.
 
 Summarize **what changed**, **files changed**, **decisions made**,
 **validation** (what was run and what it showed, including skipped or failed
-checks), **deferred** work, and confirm:
-
-> All changes are confined to `projects/kin/`.
+checks) and **deferred** work.
 
 ## When requirements conflict
 
 1. Safety and security.
 2. Explicit task instructions.
-3. ZTM Build Fest contribution requirements.
-4. This file.
-5. Documented Kin architecture.
-6. Convenience.
+3. This file.
+4. Documented Kin architecture.
+5. Convenience.
 
 ## Guiding principle
 

@@ -34,13 +34,13 @@ sets up again.
 ## 2. Create the service
 
 1. In Railway: **New Project → Deploy from GitHub repo →**
-   `mnichols08/ZTM-Build-Fest`.
+   `mnichols08/kin-app`.
 2. Open the service's **Settings**:
-   - **Source → Root Directory:** `projects/kin`
-   - **Source → Branch:** `kin-testing` (see [Testing branch](#testing-branch):
+   - **Source → Root Directory:** leave it empty (the repository root, where
+     the `Dockerfile` is)
+   - **Source → Branch:** `testing` (see [Testing branch](#testing-branch):
      testers only get new code when you choose to promote it)
-   - **Source → Watch Paths:** `/projects/kin/**` (so other projects in the
-     repo don't redeploy Kin)
+   - **Source → Watch Paths:** leave empty; the whole repository is Kin
    - **Deploy → Healthcheck Path:** `/health`
    - **Deploy → Replicas:** `1`. Kin's database is one SQLite file and allows
      one server process.
@@ -87,19 +87,18 @@ deploy logs, wait for:
 
 Then open your address. If the logs say `Set the KIN_ORIGIN variable…`, the
 variable is missing. If the build can't find a Dockerfile, check that Root
-Directory is exactly `projects/kin`: Railway uses `projects/kin/Dockerfile`
-from there automatically. Remove any `RAILWAY_DOCKERFILE_PATH` variable left
-from an earlier setup.
+Directory is empty (or `/`): Railway uses the `Dockerfile` at the repository
+root automatically. Remove any `RAILWAY_DOCKERFILE_PATH` variable left from an
+earlier setup.
 
 ## Testing branch
 
-Railway deploys the `kin-testing` branch, not `kin-development`. Merging work
-into `kin-development` no longer touches the test server; you decide when
-testers get it.
+Railway deploys the `testing` branch, not `main`. Merging work into `main`
+doesn't touch the test server; you decide when testers get it.
 
-**Promote** the current `kin-development` to testers by opening a pull request
-from `kin-development` into `kin-testing` and merging it (or, from a clone,
-`git push origin origin/kin-development:kin-testing`). Railway redeploys; before
+**Promote** the current `main` to testers by opening a pull request from
+`main` into `testing` and merging it (or, from a clone,
+`git push origin origin/main:testing`). Railway redeploys; before
 the new code touches the database, the startup script saves a copy of it as the
 previous version left it (below). Testers see the update prompt the next time
 they open Kin.
@@ -150,7 +149,7 @@ at startup:
    isn't applied a second time: the log says `restore_skipped`. To restore the
    same file again later, delete `/data/backups/.restored-<file name>` first.
 
-If the problem came with new code, also move `kin-testing` back to the earlier
+If the problem came with new code, also move `testing` back to the earlier
 commit; a backup taken by older code may not open with newer code.
 
 To **move** a test server's data to a new Railway service or another server,
@@ -188,7 +187,7 @@ so it usually isn't needed.
 
 ## Day to day
 
-- **Updates:** promote `kin-development` into `kin-testing`
+- **Updates:** promote `main` into `testing`
   ([Testing branch](#testing-branch)).
 - **Close sign-ups:** set `KIN_ALLOW_NEW_HOUSEHOLDS=false`. Existing households
   keep working and can still invite people; anyone else sees "This Kin server

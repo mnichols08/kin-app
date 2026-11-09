@@ -11,7 +11,7 @@
 //
 // Usage: node scripts/household-authority-regression.mjs <browser executable>
 import { BROWSER_STDIO, waitForDevTools } from "./browser-launch.mjs";
-import { applyRegressionDefaults, captureFailure, waitForOrigin } from "./cdp-page.mjs";
+import { applyRegressionDefaults, captureFailure, createLoadTrace, printAbortedModules, printLoadTrace, waitForOrigin } from "./cdp-page.mjs";
 import { setViewport } from "./cdp-viewport.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -707,7 +707,7 @@ async function pageSync() {
   } finally {
     coordinator.onState = original;
   }
-  for (let i = 0; i < 200 && (app.busy || app.refreshing || app.pendingRefresh); i++) await new Promise((r) => setTimeout(r, 25));
+  for (let i = 0; i < 200 && (app.busy || app.refreshing || app.pendingRefresh || app.wakePending); i++) await new Promise((r) => setTimeout(r, 25));
   return {
     started: true,
     states,
@@ -783,6 +783,40 @@ async function pageRevokeDeviceButton(label) {
   }
 }
 
+// #769: a device carried over from the old address by a move shows as such,
+// and the admin removes it with the real People & devices button and a fresh
+// passkey.
+async function pageRemoveCarriedOver(deviceId) {
+  const app = document.querySelector("kin-app");
+  const h = app.household;
+  const originalConfirm = globalThis.confirm;
+  let asked = "";
+  globalThis.confirm = (text) => { asked = text; return true; };
+  const wait = async (predicate, label) => {
+    for (let i = 0; i < 400; i++) { if (predicate()) return; await new Promise((r) => setTimeout(r, 25)); }
+    throw new Error("Timed out waiting for " + label + ": " + h.textContent);
+  };
+  try {
+    await wait(() => !h.busy, "People & devices to be idle");
+    await h.showDevices();
+    const row = () => h.querySelector(`li[data-device-id="${deviceId}"]`);
+    const rowText = row()?.textContent ?? "";
+    const rowButtons = [...(row()?.querySelectorAll("button") ?? [])].map((b) => b.textContent);
+    const remove = () => [...h.querySelectorAll("button")].find((b) => b.textContent === "Remove the device from the old address");
+    const offered = Boolean(remove());
+    if (!offered) throw new Error("No remove-together button: " + h.textContent);
+    remove().click();
+    await wait(() => {
+      const alert = h.querySelector(".household-message");
+      if (!h.busy && alert?.getAttribute("role") === "alert") throw new Error("Removal failed: " + alert.textContent);
+      return !h.busy && row()?.textContent.includes("Revoked");
+    }, "the device to show as revoked");
+    return { rowText, rowButtons, offered, asked, revoked: Boolean(row()?.textContent.includes("Revoked")), gone: !remove() };
+  } finally {
+    globalThis.confirm = originalConfirm;
+  }
+}
+
 // #78: Adult A publishes the household's home-screen identity through the
 // admin-only Home screen section; the manifest and icons then follow A's
 // device cookie. Non-admins have no section and the service refuses them.
@@ -844,7 +878,12 @@ async function pageInstallIdentityAsMember() {
 
 async function pageWithdrawInstallIdentity() {
   const app = document.querySelector("kin-app");
+  // After A's offline reload the section is gone (no authority offline) and
+  // returns only on a later sync poll; load authority now rather than race it.
+  await app.ctx.appearance.refreshHouseholdDefaults();
+  await app.ctx.appearance.refreshInstallIdentity();
   const panel = app.householdDefaults.install;
+  if (!panel) return { section: false };
   const originalConfirm = globalThis.confirm;
   globalThis.confirm = () => true;
   try {
@@ -852,7 +891,7 @@ async function pageWithdrawInstallIdentity() {
     for (let i = 0; i < 400 && panel.state.published; i++) await new Promise((resolve) => setTimeout(resolve, 25));
   } finally { globalThis.confirm = originalConfirm; }
   const manifest = await (await fetch("/manifest.webmanifest", { credentials: "same-origin", cache: "no-store" })).json();
-  return { published: Boolean(panel.state.published), shortName: manifest.short_name, privateBrand: app.householdSettings?.brand?.iconSource,
+  return { section: true, published: Boolean(panel.state.published), shortName: manifest.short_name, privateBrand: app.householdSettings?.brand?.iconSource,
     header: { name: app.brandTitle.textContent, genericHidden: app.brandGenericMark.hidden,
       letterHidden: app.brandLetterMark.hidden, uploadHidden: app.brandUploadedMark.hidden } };
 }
@@ -1077,7 +1116,9 @@ async function launchProfile(executable, label, origin) {
     BROWSER_STDIO,
   );
   const port = await waitForDevTools(browser, profile, { label: `Browser ${label}` });
-  const target = await fetch(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(origin)}`, { method: "PUT" })
+  // The tab opens on about:blank and loads Kin only once the load trace
+  // (#594) is listening, so a first start that stalls can show why.
+  const target = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })
     .then((response) => response.json());
   const socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolveOpen, reject) => {
@@ -1090,8 +1131,10 @@ async function launchProfile(executable, label, origin) {
   // shell fails to start (#164): it once stopped with only the skip link
   // rendered, which means the app's modules never finished loading.
   const diagnostics = { errors: [], failed: [], open: new Map() };
+  const loadTrace = createLoadTrace();
   socket.onmessage = ({ data }) => {
     const message = JSON.parse(data);
+    if (message.method) loadTrace.observe(message);
     if (message.method === "Runtime.exceptionThrown")
       diagnostics.errors.push(message.params.exceptionDetails?.exception?.description ?? message.params.exceptionDetails?.text);
     else if (message.method === "Log.entryAdded" && message.params.entry.level === "error")
@@ -1157,7 +1200,10 @@ async function launchProfile(executable, label, origin) {
   await send("Network.enable");
   await send("Runtime.enable");
   await send("Log.enable");
+  // Worker starts, stops and version changes go into the load trace.
+  await send("ServiceWorker.enable").catch(() => {});
   await applyRegressionDefaults(send);
+  await send("Page.navigate", { url: origin });
   await waitForOrigin(evaluate, origin, { navigate: () => send("Page.navigate", { url: origin }) });
   await send("WebAuthn.enable", { enableUI: false });
   const { authenticatorId } = await send("WebAuthn.addVirtualAuthenticator", {
@@ -1186,6 +1232,9 @@ async function launchProfile(executable, label, origin) {
         await callStable(pageWaitReady);
       } catch (error) {
         client.addDiagnostics(error);
+        // How the tab loaded Kin, and whether a load lost a module (#594).
+        printLoadTrace(loadTrace, label);
+        printAbortedModules(loadTrace, label);
         throw error;
       }
     },
@@ -1193,6 +1242,8 @@ async function launchProfile(executable, label, origin) {
       const report = { errors: diagnostics.errors.slice(-10), failed: diagnostics.failed.slice(-10), open: [...diagnostics.open.values()].slice(-20) };
       error.message += ` | page diagnostics: ${JSON.stringify(report)}`;
     },
+    // How the tab loaded Kin, with its service worker's states (#594, #770).
+    printTrace() { printLoadTrace(loadTrace, label); },
     async setOffline(offline) {
       await send("Network.emulateNetworkConditions", { offline, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
     },
@@ -1461,7 +1512,7 @@ export async function householdAuthorityDrill({ executable, origin, service, syn
     check(reopenedBrand.privateBrand === "upload" && reopenedBrand.genericHidden && reopenedBrand.letterHidden && !reopenedBrand.uploadHidden,
       "reopening the household restores its private identity without retaining the locked fallback: " + JSON.stringify(reopenedBrand));
     const withdrawn = await a.call(pageWithdrawInstallIdentity);
-    check(!withdrawn.published && withdrawn.shortName === "Kin" && withdrawn.privateBrand === "upload" &&
+    check(withdrawn.section && !withdrawn.published && withdrawn.shortName === "Kin" && withdrawn.privateBrand === "upload" &&
       withdrawn.header.genericHidden && withdrawn.header.letterHidden && !withdrawn.header.uploadHidden,
       "withdrawing plaintext home-screen identity leaves A's encrypted in-app icon intact: " + JSON.stringify(withdrawn));
     const memberAfterWithdrawal = await b.call(pageInstallIdentityAsMember);
@@ -1515,6 +1566,8 @@ export async function householdAuthorityDrill({ executable, origin, service, syn
       "Limited C's device switches to Simple view on its next poll: " + JSON.stringify(simple));
     check(await c.call(pageLockNow), "Limited C locks");
     const shell = await c.callStable(pageOfflineShell);
+    // The trace shows whether C's last load began before its worker activated (#770).
+    if (!(shell.controlled && shell.engine)) c.printTrace();
     check(shell.controlled && shell.engine, "Limited C's service worker controls the page and holds the shell before going offline: " + JSON.stringify(shell));
     await c.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
     try {
@@ -1523,6 +1576,7 @@ export async function householdAuthorityDrill({ executable, origin, service, syn
       check(simple.unlocked && simple.simple && !simple.lists, "an offline unlock opens Simple view from the cached layout: " + JSON.stringify(simple));
     } catch (error) {
       c.addDiagnostics(error);
+      c.printTrace();
       throw error;
     } finally {
       await c.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
@@ -1832,6 +1886,26 @@ export async function householdAuthorityDrill({ executable, origin, service, syn
     check((await a.call(pagePhoneApprovalDone)).closed, "the phone closes once the returning computer finishes");
     pass(`${checks} phone sign-in assertions (profile E with A's phone)`);
     await retire(e);
+
+    // ---- Devices from the old address (#769) ------------------------------
+    // What a move leaves of the computer: its record, marked, with no token.
+    const carried = service.devices.get(firstApproval.deviceId);
+    service.deviceTokens.delete(carried.tokenHash);
+    carried.tokenHash = null;
+    carried.carriedOver = true;
+    for (const [sessionHash, session] of service.sessions)
+      if (session.deviceId === carried.id) service.sessions.delete(sessionHash);
+    service.persistHousehold(carried.householdId);
+    const removal = await a.call(pageRemoveCarriedOver, carried.id);
+    check(removal.rowText.includes("From the old address · can't sign in here") &&
+      !removal.rowButtons.some((label) => label === "Verify device" || label === "Replace this device"),
+      "People & devices marks the device from the old address, with nothing to verify or replace: " + JSON.stringify(removal));
+    check(removal.offered && /^Remove the device from the old address\? It can't sign in here\./.test(removal.asked),
+      "the admin is offered one button to remove it, and told what it is first");
+    check(removal.revoked && removal.gone && service.devices.get(carried.id).revokedAt &&
+      service.events.some((event) => event.type === "device_revoked" && event.deviceId === carried.id && event.reason === "carried_over"),
+      "after a fresh passkey the device is revoked and the button goes");
+    pass(`${checks} devices-from-the-old-address assertions (profile A)`);
     console.log(`PASS ${checks} live household authority and recovery assertions across independent browser profiles`);
     return checks;
   } catch (error) {

@@ -1,4 +1,4 @@
-# Build context is projects/kin; only Cargo/rust, server, web and package.json are used.
+# Build context is the repository root; only Cargo/rust, server, web and package.json are used.
 .git
 .kin-data
 target

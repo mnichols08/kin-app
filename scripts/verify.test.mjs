@@ -47,7 +47,14 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
       signalSource,
       spawnImpl: (command, args, options) => {
         const child = spawn(command, args, options);
-        child.once("spawn", () => setTimeout(() => signalSource.emit(signal), 150));
+        // Interrupt once the child reports its descendant, not after a fixed
+        // delay: a slow Node start could otherwise be killed before it spawns one.
+        let seen = "";
+        let sent = false;
+        child.stdout.on("data", (chunk) => {
+          seen += chunk;
+          if (!sent && /descendant:\d+/.test(seen)) { sent = true; signalSource.emit(signal); }
+        });
         return child;
       },
     });
@@ -157,10 +164,9 @@ test("missing required browser is a failure and optional browser stage is NOT RU
   assert.equal(messages.some((message) => message.includes("NOT RUN E — Browser verification")), true);
 });
 
-test("test discovery is deterministic and works from repository and Kin directory paths", async () => {
+test("test discovery is deterministic", async () => {
   const fromProject = await collectNodeTests(PROJECT_ROOT);
-  const fromRepository = await collectNodeTests(join(PROJECT_ROOT));
-  assert.deepEqual(fromRepository, fromProject);
+  assert.deepEqual(await collectNodeTests(PROJECT_ROOT), fromProject);
   assert.ok(fromProject.some((path) => path.endsWith(join("server", "durable-sync-integrity.test.mjs"))));
   assert.ok(fromProject.some((path) => path.endsWith(join("scripts", "v1-compatibility.test.mjs"))));
   assert.ok(fromProject.some((path) => path.endsWith(join("relay", "sni.test.mjs"))), "the connection relay's tests are in the gate (#728)");
@@ -186,9 +192,9 @@ test("test discovery is deterministic and works from repository and Kin director
   }
 });
 
-test("the entry point resolves paths from the repository root and the Kin directory", async () => {
+test("the entry point resolves paths from the repository root and from a subdirectory", async () => {
   const script = join(PROJECT_ROOT, "scripts", "verify.mjs");
-  for (const cwd of [join(PROJECT_ROOT, "..", ".."), PROJECT_ROOT]) {
+  for (const cwd of [PROJECT_ROOT, join(PROJECT_ROOT, "scripts")]) {
     const result = await new Promise((resolveResult) => {
       const child = spawn(process.execPath, [script], { cwd, stdio: ["ignore", "pipe", "pipe"] });
       let stdout = "";
@@ -398,7 +404,7 @@ test("a passing browser suite runs once (#328)", async () => {
   const { execute, calls } = scriptedExecute(() => ({ code: 0, stdout: "", stderr: "" }));
   const result = await runVerification({ browser: true, browserExecutable: process.execPath, execute, nodeVersion: "24.16.0", output: () => {} });
   assert.equal(result.code, 0);
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 7);
   assert.ok(calls.every(({ attempt }) => attempt === 1));
 });
 

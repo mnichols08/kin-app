@@ -6,18 +6,19 @@ Please report security problems privately. Do not open a public issue, and do
 not post exploit details, household data, credentials, pairing codes,
 recovery keys or proof-of-concept material anywhere public.
 
-1. Use **GitHub's private vulnerability reporting** on the hosting repository
+1. Use **GitHub's private vulnerability reporting** on
+   [mnichols08/kin-app](https://github.com/mnichols08/kin-app)
    (`Security` → `Report a vulnerability`) if it is enabled there.
 2. Otherwise, contact the maintainer, Mikey Nichols, through the private
    contact options on the [@mnichols08](https://github.com/mnichols08) GitHub
-   profile, and say that it concerns `projects/kin/`.
+   profile, and say that it concerns Kin.
 
 Include a concise description of the impact, the affected version or commit,
 safe reproduction steps using synthetic data only, and any mitigation you
 already see. Do not access or keep another person's household information
 while investigating.
 
-Kin is a volunteer Build Fest project. Reports are read and taken seriously,
+Kin is a volunteer project. Reports are read and taken seriously,
 a fix and disclosure are coordinated where applicable, and sensitive details
 are not published before affected people can reasonably respond; but there is
 no staffed security team and no response-time or remediation guarantee.

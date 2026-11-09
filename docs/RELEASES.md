@@ -10,6 +10,23 @@ Before any v1.x release, check it against the
 formats but must keep reading every v1.0 format, and CI fails if a frozen
 version changes without that document.
 
+## Where releases come from
+
+Kin lives in [mnichols08/kin-app](https://github.com/mnichols08/kin-app).
+Work merges into `main` through pull requests; `testing` is what the test
+server deploys. Releases are cut from `main`: the release commit is on `main`
+and its annotated `kin-vX.Y.Z` tag points at it. GitHub releases for the home
+server's executables are published on kin-app under the same tag
+(`server/home/release.mjs`).
+
+The tag name stays `kin-vX.Y.Z` even though the repository now holds only
+Kin: the home server's updater builds download URLs from it
+(`…/releases/download/kin-v<version>/…`), and it keeps one unbroken series
+with the earlier tags. Tags up to `kin-v1.6.0` were made in
+`mnichols08/ZTM-Build-Fest`, where Kin lived under `projects/kin/` until
+November 2026, and are not in this repository; issue and PR numbers from
+before then refer to that repository too.
+
 ## Release sequence
 
 The completed progression is `kin-v0.9.3` → `kin-v0.10.0` (Portable Core + Local
@@ -64,10 +81,10 @@ scope complete
 validation and documentation updated
       |
       v
-inspect git status and diff (Kin paths plus explicitly authorized integration files)
+inspect git status and diff
       |
       v
-release commit
+release commit on main (merged by pull request)
       |
       v
 verify clean working tree
@@ -76,12 +93,12 @@ verify clean working tree
 annotated kin-vX.Y.Z tag on that commit
       |
       v
-push commit/tag when explicitly authorized
+push the tag when explicitly authorized
 ```
 
-A tag is created only for a completed, validated milestone. Use a descriptive annotated tag such as `kin-v0.0.8` or `kin-v0.1.0`. Never use generic tags such as `v0.1.0`; the repository contains multiple independent projects. Published tags are immutable: do not move, force-update, or reuse them. Correct a released mistake with a new patch version.
+A tag is created only for a completed, validated milestone. Use a descriptive annotated tag such as `kin-v0.0.8` or `kin-v0.1.0`. Never use generic tags such as `v0.1.0`; every Kin tag keeps the `kin-` prefix. Published tags are immutable: do not move, force-update, or reuse them. Correct a released mistake with a new patch version.
 
-Before a new version starts, verify that the previous completed Kin version has its matching tag. Inspect the entire worktree and stage/commit only paths under `projects/kin/`. Do not include another contributor's changes.
+Before a new version starts, verify that the previous completed Kin version has its matching tag. Inspect the entire worktree and commit only the release's own changes. Do not include another contributor's changes.
 
 The v0.10.1 patch starts from the completed v0.10.0 commit `2dc94f8`.
 At the user's publication request, the missing annotated `kin-v0.10.0` tag was

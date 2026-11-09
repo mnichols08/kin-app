@@ -15,7 +15,7 @@ import { DurableStore } from "../durable-store.mjs";
 import { PairingError } from "../pairing-service.mjs";
 import { createKinServer } from "../server.mjs";
 import { ALERT_INTERVAL_MS, certificateAlerts, createControlPanel, loopbackProblem, writeProblem } from "./control-panel.mjs";
-import { loadHomeSettings, resolveHomeSettings } from "./settings.mjs";
+import { loadHomeSettings, resolveHomeSettings, writeHomeSettings } from "./settings.mjs";
 
 const TIMEOUT = { timeout: 30_000 };
 const NAME = "fern.home.kin.journeytocode.io";
@@ -418,13 +418,59 @@ test("backups (#721): back up now, the hour and restore are changes confirmed li
   assert.equal(context.panel.status().backups.state, "restoring");
 });
 
+test("the second backup folder (#763) is chosen only on this computer, checked for its form before a code is spent", TIMEOUT, async (t) => {
+  const context = await startPanel(t, { configured: true, home: setUpHome() });
+  // As on a set-up server, the file names it.
+  await writeHomeSettings(context.dataDirectory, { name: NAME, acmeTermsAgreed: true }, {});
+  context.panel.issueCode("access", { force: true });
+  const cookie = await signIn(context);
+  const folder = process.platform === "win32" ? "E:\\Kin copies" : "/media/usb";
+  const change = { kind: "backup-copy-folder", folder };
+  // Refused for a caller that doesn't say it is the loopback panel (the
+  // household's address), while other changes pass.
+  assert.throws(() => context.panel.checkChange(change), (error) => error.code === "control-loopback-only" && error.status === 403);
+  await assert.rejects(context.panel.applyChange(change), (error) => error.code === "control-loopback-only");
+  assert.equal(context.panel.checkChange({ kind: "households-limit", maxHouseholds: 2 }).maxHouseholds, 2);
+  const { admin } = populate(context.application.service);
+  const remote = await call(context.port, "/api/control/change/options", {
+    method: "POST", body: { change },
+    headers: { host: NAME, origin: `https://${NAME}`, cookie: `kin_session=${admin.sessionToken}; kin_device=${admin.deviceToken}` },
+  });
+  assert.equal(remote.status, 403);
+  assert.equal(remote.body.error, "control-loopback-only");
+  // On loopback: a relative path or one inside Kin's data folder is refused
+  // before the code is spent.
+  assert.equal((await post(context, "confirm-code", {}, { cookie })).status, 200);
+  const code = context.printed.at(-1).code;
+  for (const bad of ["copies", join(context.dataDirectory, "copies"), context.dataDirectory, process.platform === "win32" ? "\\\\nas\\share" : "media/usb"])
+    assert.equal((await post(context, "change", { change: { kind: "backup-copy-folder", folder: bad }, code }, { cookie })).body.error, "control-backup-copy-invalid", bad);
+  const done = await post(context, "change", { change, code }, { cookie });
+  assert.equal(done.status, 200, JSON.stringify(done.body));
+  assert.deepEqual(done.body, { kind: "backup-copy-folder", folder, checking: true });
+  assert.equal((await loadHomeSettings(context.dataDirectory, {})).backupCopyFolder, folder);
+  // The launcher hasn't looked yet; the path is shown only on loopback.
+  const shown = context.panel.status().backups.copy;
+  assert.equal(shown.state, "waiting", "the settings took effect at once");
+  assert.ok(!("folder" in shown));
+  const state = await call(context.port, "/control/api/state", { headers: { cookie } });
+  assert.equal(state.body.status.backups.copy.folder, folder);
+  const status = await call(context.port, "/api/control/status", { headers: { host: NAME, origin: `https://${NAME}`, cookie: `kin_session=${admin.sessionToken}; kin_device=${admin.deviceToken}` } });
+  assert.equal(status.status, 200);
+  assert.ok(!JSON.stringify(status.body).includes(folder.replaceAll("\\", "\\\\")), "never through the household's address");
+  // Emptied: off again.
+  assert.equal((await post(context, "confirm-code", {}, { cookie })).status, 200);
+  const off = await post(context, "change", { change: { kind: "backup-copy-folder", folder: null }, code: context.printed.at(-1).code }, { cookie });
+  assert.deepEqual(off.body, { kind: "backup-copy-folder", folder: null, checking: false });
+  assert.equal(context.panel.status().backups.copy.state, "off");
+});
+
 test("updates (#722): the launcher's status is shown, and installing or automatic updates are confirmed changes", TIMEOUT, async (t) => {
   const context = await startPanel(t, { configured: true, home: setUpHome() });
   const { mkdirSync: mkdir, writeFileSync: write, readFileSync: read } = await import("node:fs");
   mkdir(join(context.dataDirectory, "updates"), { recursive: true });
   write(join(context.dataDirectory, "updates", "status.json"), JSON.stringify({
     format: 1, state: "available", stage: null, current: "1.6.0", checkedAt: "2026-11-02T12:00:00.000Z", autoUpdate: true, cannotInstall: null,
-    available: { version: "2.0.0", kind: "major", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/ZTM-Build-Fest/releases/tag/kin-v2.0.0", blocked: null, install: "admin" },
+    available: { version: "2.0.0", kind: "major", releasedAt: "2026-11-02T10:00:00.000Z", page: "https://github.com/mnichols08/kin-app/releases/tag/kin-v2.0.0", blocked: null, install: "admin" },
     lastError: null, lastUpdate: null, failedVersion: null,
   }));
   const updates = context.panel.status().updates;

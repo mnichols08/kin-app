@@ -93,8 +93,8 @@ A map of what is in this folder and where to start. Documents marked
 - [CODE-STYLE](CODE-STYLE.md): conventions for Rust, JavaScript and CSS.
 - [RELEASES](RELEASES.md): how a release is cut and tagged.
 - [ROADMAP](ROADMAP.md): how Kin got to v1.6 and where work is tracked now.
-- [GITHUB-COMMUNITY](GITHUB-COMMUNITY.md): the community files and the
-  monorepo limitation.
+- [GITHUB-COMMUNITY](GITHUB-COMMUNITY.md): the community files and where
+  they came from.
 - [ci/](ci/): the reference copy of the verification workflow.
 
 ## Records

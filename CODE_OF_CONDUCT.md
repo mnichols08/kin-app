@@ -73,13 +73,12 @@ spaces.
 Instances of abusive, harassing or otherwise unacceptable behaviour may be
 reported to the maintainer, Mikey Nichols, privately through the contact
 options on the [@mnichols08](https://github.com/mnichols08) GitHub profile,
-or through GitHub's own reporting tools for the hosting repository. Do not
+or through GitHub's own reporting tools for the repository. Do not
 include household data in a report. All complaints will be reviewed and
 investigated promptly and fairly, and the privacy and security of the
 reporter will be respected.
 
-Kin is hosted inside the ZTM Build Fest repository, whose maintainers control
-repository-wide moderation tools. This document does not promise a staffed
+Kin is a volunteer project. This document does not promise a staffed
 moderation team or a response time.
 
 ## Enforcement guidelines

@@ -1,4 +1,4 @@
-# Kin test server image (deploy/README.md). Build from projects/kin:
+# Kin test server image (deploy/README.md). Build from the repository root:
 #   docker compose -f deploy/compose.yaml build
 #
 # Stage 1 builds the Rust domain engine to WebAssembly with the toolchain

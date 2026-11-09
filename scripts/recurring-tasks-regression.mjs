@@ -18,7 +18,7 @@ export async function recurringTaskRegressions(client, { visit, ready }) {
     throw new Error(`Repeating tasks timed out: ${label}`);
   };
   const settle = () => page(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))));
-  const idle = () => until(() => { const app = document.querySelector("kin-app"); return Boolean(app?.state) && !app.busy && !app.bulkRunning && !app.refreshing && !app.pendingRefresh; }, "idle");
+  const idle = () => until(() => { const app = document.querySelector("kin-app"); return Boolean(app?.state) && !app.busy && !app.bulkRunning && !app.refreshing && !app.pendingRefresh && !app.wakePending; }, "idle");
   const KEYS = {
     tab: { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 },
     enter: { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
@@ -32,15 +32,21 @@ export async function recurringTaskRegressions(client, { visit, ready }) {
     await client.send("Input.dispatchKeyEvent", { type: "keyUp", ...rest });
     await settle();
   };
-  // Headless Edge occasionally drops an insert sent in the same frame a modal
-  // dialog focused its field; retry only when the field is still unchanged.
+  // A wake refresh disables every control while it runs (the app's busy
+  // guard), and a disabled field drops typed text. Type only while idle, so
+  // the text is never sent into a refresh (#801). Headless Edge also
+  // occasionally drops an insert sent in the same frame a modal dialog
+  // focused its field; retry only when the field is still unchanged.
   const type = async (text) => {
+    await idle();
     const before = await page(() => document.activeElement?.value ?? null);
     for (let attempt = 0; attempt < 3; attempt++) {
       await client.send("Input.insertText", { text });
       await settle();
-      if ((await page(() => document.activeElement?.value ?? null)) !== before) return;
+      if ((await page(() => document.activeElement?.value ?? null)) !== before) break;
     }
+    const typed = await page(() => ({ value: document.activeElement?.value ?? null, focus: document.activeElement?.id || document.activeElement?.tagName }));
+    assert.ok(typed.value?.endsWith(text), `Repeating tasks: the typed text "${text}" is not in the field ${JSON.stringify(typed)}`);
   };
   const viewport = async (width, height, mobile) => {
     await setViewport(client, { width, height, deviceScaleFactor: 1, mobile });
@@ -331,7 +337,7 @@ export async function recurringTaskRegressions(client, { visit, ready }) {
     }, changeCount, "Change schedule");
     let versions = await routineByText(title);
     // A wake refresh clears and then restores a pending alert; read it settled.
-    const partial = await until(() => { const app = document.querySelector("kin-app"); return !app.busy && !app.refreshing && app.alert.textContent.includes("still repeating") && app.alert.textContent; }, "partial-save alert");
+    const partial = await until(() => { const app = document.querySelector("kin-app"); return !app.busy && !app.refreshing && !app.pendingRefresh && !app.wakePending && app.alert.textContent.includes("still repeating") && app.alert.textContent; }, "partial-save alert");
     check(versions.length === 2 && versions.filter((entry) => entry.status === "active").length === 2 && partial.includes("still repeating") &&
       (await eventCount()) === changeCount + 1,
       "a failure after the new schedule is saved says the old one is still repeating", { partial, versions });

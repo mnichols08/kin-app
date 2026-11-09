@@ -24,20 +24,22 @@ public issue.
 
 ## Where things live
 
-Kin is nested in the ZTM Build Fest monorepo at `projects/kin/`. Everything
-about Kin lives there, and a pull request must change nothing outside it (the
-root `kin-verification.yml` workflow is the one authorized exception, kept in
-step with `docs/ci/`). Because of that nesting, GitHub does not apply Kin's
-issue templates automatically; please pick the right form by hand, or copy
-its headings into a plain issue.
+Kin is the whole of [mnichols08/kin-app](https://github.com/mnichols08/kin-app);
+the repository root is the project root. The CI workflow is
+`.github/workflows/kin-verification.yml`, kept in step with its reference copy
+in `docs/ci/` (a test fails if they drift).
 
 Branches:
 
-- `kin-development` is the integration branch. Pull requests target it.
-- `kin-testing` is what the test server deploys; maintainers promote
-  `kin-development` into it when CI is green.
-- Releases are annotated tags `kin-vX.Y.Z` cut by the maintainer
+- `main` is the default branch. Pull requests target it.
+- `testing` is what the test server deploys; maintainers promote `main` into
+  it when CI is green ([deploy/railway](deploy/railway/README.md#testing-branch)).
+- Releases are annotated tags `kin-vX.Y.Z` on `main`, cut by the maintainer
   ([RELEASES](docs/RELEASES.md)).
+
+Until November 2026 Kin lived in `mnichols08/ZTM-Build-Fest` under
+`projects/kin/`. Issue and PR numbers from before then (`#708` and so on)
+refer to that repository.
 
 ## Set up
 
@@ -47,7 +49,7 @@ Branches:
 2. Fork and clone the repository, then:
 
    ```sh
-   cd projects/kin
+   cd kin-app
    npm ci
    rustup target add wasm32-unknown-unknown
    sh run.sh          # ./run.ps1 on Windows
@@ -132,8 +134,6 @@ suites (no Chromium-family browser, for example), say so in the PR.
   the issue number where there is one.
 - Fill in the [pull request template](.github/pull_request_template.md): what
   changed, how you validated it, and the checklist.
-- Keep the PR to `projects/kin/`. Reviewers will ask you to revert anything
-  else.
 - Expect review comments about scope, privacy, accessibility and docs; they
   are the things this project cares about most.
 

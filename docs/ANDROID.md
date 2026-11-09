@@ -58,7 +58,7 @@ No Gradle wrapper is committed (it would be a binary jar). Either use an
 installed Gradle:
 
 ```sh
-cd projects/kin/android
+cd android
 gradle assembleDebug          # app/build/outputs/apk/debug/app-debug.apk
 gradle bundleDebug            # app/build/outputs/bundle/debug/app-debug.aab
 ```
@@ -141,12 +141,12 @@ years; Android's guidance is at least 25.
   example an encrypted USB drive kept somewhere safe).
 - The password: in your password manager, with a note of the alias
   (`kin-upload`) and where the file and its backup are.
-- The ignore rules in `projects/kin/.gitignore` (`*.jks`, `*.keystore`,
+- The ignore rules in `.gitignore` (`*.jks`, `*.keystore`,
   `keystore.properties`) are a safety net, not a place to keep it.
 
 ### 3. Tell the build where it is
 
-Create `projects/kin/android/keystore.properties` (ignored, never committed):
+Create `android/keystore.properties` (ignored, never committed):
 
 ```properties
 storeFile=/home/you/private/kin-upload.keystore
@@ -160,7 +160,7 @@ or set `KIN_ANDROID_KEYSTORE`, `KIN_ANDROID_KEYSTORE_PASSWORD`,
 Then one command builds the signed bundle:
 
 ```sh
-cd projects/kin/android && gradle bundleRelease
+cd android && gradle bundleRelease
 # app/build/outputs/bundle/release/app-release.aab
 ```
 
